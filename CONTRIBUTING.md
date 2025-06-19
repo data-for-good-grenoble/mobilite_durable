@@ -1,5 +1,24 @@
 # Comment contribuer (WIP)
 
+## Les bonnes pratiques
+Il y en a beaucoup trop pour les citer, c'est un métier. N'hésitez pas à poser des questions.
+- Faites au mieux pour découper votre logique en méthodes distinctes
+- N'hésitez pas à utiliser des classes pour refactoriser votre code et le rendre réutilisable
+- À flexibiser votre code en ajoutant des paramètres à vos méthodes plutôt qu'à mettre des valeurs en dur
+- Les [tests](https://docs.pytest.org/en/stable/) sont appréciés
+- Le [typing](https://docs.python.org/3/library/typing.html) également
+- Créez des méthodes plutôt que faire du c/c
+- Lintez votre code python (avec ruff ou activez le pre-commit)
+
+
+## Les tests
+
+On utilise [pytest](https://docs.pytest.org/en/stable/) pour tester le code, les tests sont à placer dans `src/tests/`.\
+Il est conseillé d'ajouter des tests au fur et à mesure.\
+À défaut, pensez à bien découper vos méthodes de façon à séparer votre logique et faciliter la rédaction ultérieure des tests.\
+À savoir que la CI bloquera vos PR si les tests échouent.
+
+
 ## main.py
 
 Le fichier `main.py` est le point d'entrée temporaire de votre code.
@@ -17,6 +36,13 @@ Puis exécutez votre script depuis la racine grâce au fichier `main.py`.
 ```
 
 Dans le `kwargs` vous trouverez les différents arguments fournis de la commande.
+
+
+## Les jeux de données
+
+Les données se situent dans le dossier `src/data/`.\
+Actuellement, on y retrouve notamment les données brutes de C2C et de OSM.\
+Elles ne sont pas définitives mais vous pouvez commencer à vous familiariser avec elles.
 
 
 ## pre-commit
