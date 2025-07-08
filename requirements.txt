@@ -4,7 +4,7 @@ aiofiles==24.1.0
     # via mdm (pyproject.toml)
 branca==0.8.1
     # via folium
-certifi==2025.4.26
+certifi==2025.6.15
     # via
     #   curl-cffi
     #   pyogrio
@@ -14,9 +14,9 @@ cffi==1.17.1
     # via curl-cffi
 charset-normalizer==3.4.2
     # via requests
-curl-cffi==0.11.1
+curl-cffi==0.11.4
     # via mdm (pyproject.toml)
-folium==0.19.7
+folium==0.20.0
     # via gtfs-kit
 geopandas==1.1.0
     # via gtfs-kit
@@ -32,7 +32,7 @@ json2html==1.3.0
     # via gtfs-kit
 markupsafe==3.0.2
     # via jinja2
-numpy==2.2.6
+numpy==2.3.1
     # via
     #   folium
     #   geopandas
@@ -43,7 +43,7 @@ packaging==25.0
     # via
     #   geopandas
     #   pyogrio
-pandas==2.2.3
+pandas==2.3.0
     # via
     #   geopandas
     #   gtfs-kit
@@ -57,7 +57,7 @@ python-dateutil==2.9.0.post0
     # via pandas
 pytz==2025.2
     # via pandas
-requests==2.32.3
+requests==2.32.4
     # via
     #   folium
     #   gtfs-kit
@@ -73,7 +73,7 @@ tqdm==4.67.1
     # via mdm (pyproject.toml)
 tzdata==2025.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.5.0
     # via requests
 xyzservices==2025.4.0
     # via folium
