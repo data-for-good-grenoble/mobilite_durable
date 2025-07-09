@@ -19,7 +19,7 @@ if __name__ == "__main__":
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    logger = setup_logger(level=logging.INFO)
+    logger = setup_logger()
 
     start = datetime.now()
 
