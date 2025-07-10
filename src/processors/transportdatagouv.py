@@ -14,8 +14,10 @@ TODO
 - progress bar: download, process
 """
 
+import glob
 import json
 import logging
+import os
 import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -179,6 +181,23 @@ class TransportDataGouvProcessor(ProcessorMixin):
     @classmethod
     def download_gtfs_files(cls, datasets):
         """Download GTFS files from the filtered datasets"""
+
+        def delete_files(dataset_id, datagouv_id):
+            # Construct the pattern for the files to delete
+            pattern = f"*_{dataset_id}_{datagouv_id}.zip"
+
+            # Use glob to find all files matching the pattern
+            search_pattern = os.path.join(cls.output_dir, pattern)
+            files_to_delete = glob.glob(search_pattern)
+
+            # Delete each file found
+            for file in files_to_delete:
+                try:
+                    os.remove(file)
+                    logger.info(f"  Deleted {file}.")
+                except Exception as e:
+                    logger.error(f"  Error deleting {file}: {e}")
+
         download_count = 0
         skipped_count = 0
         error_count = 0
@@ -221,7 +240,9 @@ class TransportDataGouvProcessor(ProcessorMixin):
                     logger.info(f"  File {filename} already exists, skipping.")
                     skipped_count += 1
                     continue
-                # TODO Delete old one: OTHER-DATE_{dataset_id}_{datagouv_id}.zip
+
+                # Delete old files
+                delete_files(dataset_id, datagouv_id)
 
                 logger.info(f"  Downloading {url} to {output_path.absolute()}")
 
@@ -240,8 +261,8 @@ class TransportDataGouvProcessor(ProcessorMixin):
                         raise Exception(f"File was not created at {output_path.absolute()}")
 
                     download_count += 1
-                    logger.info(f"  Successfully downloaded to {output_path.absolute()}")
-                    logger.info(f"  File size: {output_path.stat().st_size} bytes")
+                    logger.debug(f"  Successfully downloaded to {output_path.absolute()}")
+                    logger.debug(f"  File size: {output_path.stat().st_size} bytes")
 
                     # Validate that it's a valid ZIP file
                     try:
@@ -249,7 +270,7 @@ class TransportDataGouvProcessor(ProcessorMixin):
                             file_list = zf.namelist()
                             logger.info(f"  ZIP file contains {len(file_list)} files")
                     except zipfile.BadZipFile:
-                        logger.warning(
+                        logger.error(
                             f"  Downloaded file is not a valid ZIP file: {output_path}"
                         )
 
@@ -264,7 +285,12 @@ class TransportDataGouvProcessor(ProcessorMixin):
     @classmethod
     def run(cls, reload_pipeline: bool = False) -> None:
         """Run the processor to download GTFS data"""
-        super().run(reload_pipeline)
+
+        content = cls.fetch(reload_pipeline=reload_pipeline)
+
+        if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
+            output_content = cls.pre_process(content)
+            cls.save(output_content, cls.output_file)
 
         # TODO Overridden run() function
         # To download the GTFS files: we have more than 1 output_file
