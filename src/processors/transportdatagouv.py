@@ -34,13 +34,14 @@ logger = logging.getLogger(__name__)
 
 class TransportDataGouvProcessor(ProcessorMixin):
     """
-    Processor for downloading, loading, merging, and cleaning GTFS data from transport.data.gouv.fr
+    Processor for downloading GTFS data from transport.data.gouv.fr
 
     This processor:
     1. Fetches datasets from the transport.data.gouv.fr API
-    2. Filters for public-transit datasets with bus mode
-    3. Checks that data is recent (less than a year old) and has a valid GTFS format
-    4. Downloads and saves the GTFS files
+    2. Filters for public-transit datasets
+       and checks that data is recent (less than a year old) and has a valid GTFS format
+    3. Downloads and saves the GTFS files, skips already downloaded GTFS files
+       optionally force download, gets the latest updates and deletes the old GTFS files.
     """
 
     # Define paths
@@ -102,6 +103,7 @@ class TransportDataGouvProcessor(ProcessorMixin):
 
         TODO:
         - some resources can contain both bus and another mode, for now download if at least one bus resource is available
+        - some resources can have long-distance lines accross Europe like flixbus
         """
         filtered_datasets = []
         # Create a timezone-aware datetime for one year ago
