@@ -184,9 +184,9 @@ class TransportDataGouvProcessor(ProcessorMixin):
     def download_gtfs_files(cls, datasets):
         """Download GTFS files from the filtered datasets"""
 
-        def delete_files(dataset_id, datagouv_id):
+        def delete_files(file_dataset_id, file_datagouv_id):
             # Construct the pattern for the files to delete
-            pattern = f"*_{dataset_id}_{datagouv_id}.zip"
+            pattern = f"*_{file_dataset_id}_{file_datagouv_id}.zip"
 
             # Use glob to find all files matching the pattern
             search_pattern = os.path.join(cls.output_dir, pattern)
@@ -197,8 +197,8 @@ class TransportDataGouvProcessor(ProcessorMixin):
                 try:
                     os.remove(file)
                     logger.info(f"  Deleted {file}.")
-                except Exception as e:
-                    logger.error(f"  Error deleting {file}: {e}")
+                except Exception as ex:
+                    logger.error(f"  Error deleting {file}: {ex}")
 
         download_count = 0
         skipped_count = 0
@@ -301,7 +301,7 @@ class TransportDataGouvProcessor(ProcessorMixin):
                 filtered_datasets = json.load(f)
                 cls.download_gtfs_files(filtered_datasets)
                 logger.info(
-                    f"Downloaded {sum(len(d.get('resources', [])) for d in filtered_datasets)} GTFS files from {len(filtered_datasets)} datasets"
+                    f"Processed {sum(len(d.get('resources', [])) for d in filtered_datasets)} GTFS files from {len(filtered_datasets)} datasets"
                 )
 
 
