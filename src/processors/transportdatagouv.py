@@ -10,6 +10,7 @@ TODO
 - make it fit better the ProcessorMixin
   - output is not one file but a set of GTFS, for now storing the dataset json from the API
 - filter better the GTFS
+- delete files which are not in the datasets anymore
 - asynchronous downloads
 - progress bar: download, process
 """
@@ -20,6 +21,7 @@ import logging
 import os
 import zipfile
 from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
 
 import requests
@@ -39,7 +41,7 @@ class TransportDataGouvProcessor(ProcessorMixin):
     This processor:
     1. Fetches datasets from the transport.data.gouv.fr API
     2. Filters for public-transit datasets
-       and checks that data is recent (less than a year old) and has a valid GTFS format
+       and checks that data is recent and has a valid GTFS format
     3. Downloads and saves the GTFS files, skips already downloaded GTFS files
        optionally force download, gets the latest updates and deletes the old GTFS files.
     """
@@ -47,14 +49,17 @@ class TransportDataGouvProcessor(ProcessorMixin):
     # Define paths
     input_dir = DATA_FOLDER / "transportdatagouv"
     input_file = input_dir / "datasets.json"
-    output_file = input_dir / "filtered_datasets.json"
     output_dir = input_dir
+    output_file = output_dir / "filtered_datasets.json"
 
     # API URL
     API_URL = "https://transport.data.gouv.fr/api/datasets"
 
     # Force download even if the GTFS already exists
     force_download = False
+
+    # Number of days a resource is considered valid
+    resource_validity_days_threshold = 365
 
     # Limit to x datasets for testing
     test_limit = None
@@ -103,13 +108,13 @@ class TransportDataGouvProcessor(ProcessorMixin):
 
         TODO:
         - some resources can contain both bus and another mode, for now download if at least one bus resource is available
-        - some resources can have long-distance lines accross Europe like flixbus
+        - some resources can have long-distance lines across Europe like flixbus
         """
         filtered_datasets = []
-        # Create a timezone-aware datetime for one year ago
-        one_year_ago = datetime.now().replace(
+        # Create a timezone-aware datetime
+        valid_days_threshold = datetime.now().replace(
             tzinfo=datetime.now().astimezone().tzinfo
-        ) - timedelta(days=365)
+        ) - timedelta(days=cls.resource_validity_days_threshold)
         today = datetime.now().replace(tzinfo=datetime.now().astimezone().tzinfo)
 
         for dataset in content:
@@ -155,12 +160,12 @@ class TransportDataGouvProcessor(ProcessorMixin):
                         )
                         continue
 
-                # Check if resource is recent (less than a year old)
+                # Check if the resource is recent
                 if "updated" in resource:
                     updated_date = datetime.fromisoformat(
                         resource["updated"].replace("Z", "+00:00")
                     )
-                    if updated_date < one_year_ago:
+                    if updated_date < valid_days_threshold:
                         logger.warning(
                             f"Dataset {dataset.get('id', 'unknown')} last updated in {updated_date}. Skipping."
                         )
@@ -184,32 +189,19 @@ class TransportDataGouvProcessor(ProcessorMixin):
     def download_gtfs_files(cls, datasets):
         """Download GTFS files from the filtered datasets"""
 
-        def delete_files(file_dataset_id, file_datagouv_id):
-            # Construct the pattern for the files to delete
-            pattern = f"*_{file_dataset_id}_{file_datagouv_id}.zip"
-
-            # Use glob to find all files matching the pattern
-            search_pattern = os.path.join(cls.output_dir, pattern)
-            files_to_delete = glob.glob(search_pattern)
-
-            # Delete each file found
-            for file in files_to_delete:
-                try:
-                    os.remove(file)
-                    logger.info(f"  Deleted {file}.")
-                except Exception as ex:
-                    logger.error(f"  Error deleting {file}: {ex}")
-
-        download_count = 0
-        skipped_count = 0
-        error_count = 0
+        status_counts = {
+            TransportDataGouvProcessor.DownloadStatus.DOWNLOADED: 0,
+            TransportDataGouvProcessor.DownloadStatus.SKIPPED: 0,
+            TransportDataGouvProcessor.DownloadStatus.ERROR: 0,
+        }
 
         # Ensure the output directory exists
         cls.output_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Starting downloads to {cls.output_dir.absolute()}")
-        logger.info(f"Output directory exists: {cls.output_dir.exists()}")
+        logger.debug(f"Output directory exists: {cls.output_dir.exists()}")
 
+        # For each dataset
         for dataset_index, dataset in enumerate(datasets):
             # Limit to test_limit datasets for testing
             if cls.test_limit and dataset_index >= cls.test_limit:
@@ -223,66 +215,48 @@ class TransportDataGouvProcessor(ProcessorMixin):
                 f"Processing dataset {dataset_id} ({dataset_index + 1}/{min(cls.test_limit, len(datasets))})"
             )
 
+            # For each resource in the dataset
             for i, resource in enumerate(dataset.get("resources", [])):
-                url = resource.get("url")
-                datagouv_id = resource.get("datagouv_id")
-                updated = resource.get("updated", datetime.now().strftime("%Y-%m-00")).split(
-                    "T"
-                )[0]
-                if not url:
-                    logger.info(f"  Resource {i} has no URL, skipping")
-                    continue
-
-                # Create a filename based on the updated date, dataset ID and datagouv ID
-                filename = f"{updated}_{dataset_id}_{datagouv_id}.zip"
-                output_path = cls.output_dir / filename
-
-                # File exists?
-                if output_path.exists() and not cls.force_download:
-                    logger.info(f"  File {filename} already exists, skipping.")
-                    skipped_count += 1
-                    continue
-
-                # Delete old files
-                delete_files(dataset_id, datagouv_id)
-
-                logger.info(f"  Downloading {url} to {output_path.absolute()}")
-
-                # Download the file
-                try:
-                    response = requests.get(url, stream=True)
-                    response.raise_for_status()
-
-                    # Save the content directly to file
-                    with open(output_path, "wb") as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
-
-                    # Verify the file was created
-                    if not output_path.exists():
-                        raise Exception(f"File was not created at {output_path.absolute()}")
-
-                    download_count += 1
-                    logger.debug(f"  Successfully downloaded to {output_path.absolute()}")
-                    logger.debug(f"  File size: {output_path.stat().st_size} bytes")
-
-                    # Validate that it's a valid ZIP file
-                    try:
-                        with zipfile.ZipFile(output_path) as zf:
-                            file_list = zf.namelist()
-                            logger.info(f"  ZIP file contains {len(file_list)} files")
-                    except zipfile.BadZipFile:
-                        logger.error(
-                            f"  Downloaded file is not a valid ZIP file: {output_path}"
-                        )
-
-                except Exception as e:
-                    error_count += 1
-                    logger.error(f"  ERROR downloading {url}: {e}")
+                status = cls.download_GTFS_from_resource(dataset_id, resource, True)
+                status_counts[status] += 1
 
         logger.info(
-            f"Download summary: {download_count} files downloaded, {skipped_count} files skipped, {error_count} errors"
+            f"Download summary: "
+            f"{status_counts[TransportDataGouvProcessor.DownloadStatus.DOWNLOADED]} files downloaded, "
+            f"{status_counts[TransportDataGouvProcessor.DownloadStatus.SKIPPED]} files skipped, "
+            f"{status_counts[TransportDataGouvProcessor.DownloadStatus.ERROR]} errors"
         )
+
+    @classmethod
+    def delete_files(cls, file_dataset_id, file_datagouv_id):
+        # Construct the pattern for the files to delete
+        pattern = f"*_{file_dataset_id}_{file_datagouv_id}.zip"
+
+        # Use glob to find all files matching the pattern
+        search_pattern = os.path.join(cls.output_dir, pattern)
+        files_to_delete = glob.glob(search_pattern)
+
+        # Delete each file found
+        for file in files_to_delete:
+            try:
+                os.remove(file)
+                logger.info(f"\t\tDeleted {file}.")
+            except Exception as ex:
+                logger.error(f"\t\tError deleting {file}: {ex}")
+
+    @classmethod
+    def check_zipfile(cls, output_path):
+        """Validate that it's a valid ZIP file"""
+        # Verify the file was created
+        if not output_path.exists():
+            raise Exception(f"File is not found {output_path.absolute()}")
+
+        try:
+            with zipfile.ZipFile(output_path) as zf:
+                file_list = zf.namelist()
+                logger.debug(f"\t\tZIP file contains {len(file_list)} files")
+        except zipfile.BadZipFile:
+            raise Exception(f"Downloaded file is not a valid ZIP file: {output_path}")
 
     @classmethod
     def run(cls, reload_pipeline: bool = False) -> None:
@@ -301,13 +275,66 @@ class TransportDataGouvProcessor(ProcessorMixin):
                 filtered_datasets = json.load(f)
                 cls.download_gtfs_files(filtered_datasets)
                 logger.info(
-                    f"Processed {sum(len(d.get('resources', [])) for d in filtered_datasets)} GTFS files from {len(filtered_datasets)} datasets"
+                    f"Processed finished. Found {sum(len(d.get('resources', [])) for d in filtered_datasets)} GTFS files from {len(filtered_datasets)} datasets"
                 )
+
+    class DownloadStatus(Enum):
+        DOWNLOADED = "downloaded"
+        SKIPPED = "skipped"
+        ERROR = "error"
+
+    @classmethod
+    def download_GTFS_from_resource(cls, dataset_id, resource, delete_old_files=True):
+        """Get URL from resource and download the GTFS file to output directory"""
+
+        url = resource.get("url")
+        datagouv_id = resource.get("datagouv_id")
+        updated = resource.get("updated", datetime.now().strftime("%Y-%m-00")).split("T")[0]
+        if not url:
+            logger.error(f"\t\tResource {dataset_id}/{datagouv_id} has no URL, skipping.")
+            return TransportDataGouvProcessor.DownloadStatus.SKIPPED
+
+        # Create a filename based on the updated date, dataset ID and datagouv ID
+        filename = f"{updated}_{dataset_id}_{datagouv_id}.zip"
+        output_path = cls.output_dir / filename
+
+        # File exists?
+        if output_path.exists() and not cls.force_download:
+            logger.warning(f"\t\tFile {filename} already exists, skipping.")
+            return TransportDataGouvProcessor.DownloadStatus.SKIPPED
+
+        logger.debug(f"\t\tDownloading {url} to {output_path.absolute()}")
+
+        # Download the file
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+
+            # Delete old files for this dataset_id and datagouv_id
+            if delete_old_files:
+                cls.delete_files(dataset_id, datagouv_id)
+
+            # Save the content directly to file
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            cls.check_zipfile(output_path)
+
+            logger.debug(f"\t\tSuccessfully downloaded to {output_path.absolute()}")
+            logger.debug(f"\t\tFile size: {output_path.stat().st_size} bytes")
+
+            return TransportDataGouvProcessor.DownloadStatus.DOWNLOADED
+
+        except Exception as e:
+            logger.error(f"\t\tERROR downloading {url}: {e}")
+            return TransportDataGouvProcessor.DownloadStatus.ERROR
 
 
 def main():
-    TransportDataGouvProcessor.test_limit = 5  # Defaults to None
+    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
     TransportDataGouvProcessor.force_download = False  # Defaults to False
+    TransportDataGouvProcessor.resource_validity_days_threshold = 365  # Defaults to 365
 
     logger.info("Running full pipeline (download)")
     TransportDataGouvProcessor.run(reload_pipeline=False)
@@ -315,5 +342,5 @@ def main():
 
 if __name__ == "__main__":
     # Set up logger
-    setup_logger()
+    setup_logger(level=logging.DEBUG)
     main()
