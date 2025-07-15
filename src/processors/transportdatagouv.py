@@ -96,13 +96,13 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
         """
         Filter datasets for:
         - type="public-transit"
-        - resources containing "bus" mode
+        - resources containing the "bus" or "coach" or "tramway" mode
         - resources updated within a specified number of days
         - resources have the available flag set to True
         - metadata end_date not in the past (if it exists)
 
         TODO:
-        - some resources can contain both bus and another mode, for now download if at least one bus resource is available
+        - some resources can contain both bus and another mode, for now download if at least one bus/coach/tramway resource is available
         - some resources can have long-distance lines across Europe like flixbus
         """
         filtered_datasets = []
@@ -117,11 +117,15 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
             if dataset.get("type") != "public-transit":
                 continue
 
-            # Find resources with bus mode that are less than a year old
+            # Find valid resources
             valid_resources = []
             for resource in dataset.get("resources", []):
-                # Check if resource has bus mode
-                if "bus" not in resource.get("modes", []):
+                # Check if resource has bus or coach or tramway mode
+                if (
+                    "bus" not in resource.get("modes", [])
+                    and "coach" not in resource.get("modes", [])
+                    and "tramway" not in resource.get("modes", [])
+                ):
                     continue
 
                 if "GTFS" not in resource.get("format", ""):
@@ -232,7 +236,11 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
         """
 
         # Preprocess and filter datasets
-        cls.run(reload_pipeline=reload_pipeline)
+        content = cls.fetch(reload_pipeline=reload_pipeline)
+
+        if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
+            output_content = cls.pre_process(content)
+            cls.save(output_content, cls.output_file)
 
         # Use filtered_datasets.json to download the GTFS files
         if cls.output_file.exists():
@@ -244,6 +252,10 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                 )
 
                 # Download the GTFS files and display status
+                if cls.test_limit and cls.test_limit > 0:
+                    cls.urls = cls.urls[: cls.test_limit]
+                    cls.destinations = cls.destinations[: cls.test_limit]
+
                 status_counts = cls.download_files()
                 for status, files in status_counts.items():
                     logger.info(f"Files {status}: {len(files)} - {files}")
@@ -251,10 +263,6 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
 
 def main(**kwargs):
-    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
-    TransportDataGouvProcessor.force_download = False  # Defaults to False
-    TransportDataGouvProcessor.resource_validity_days_threshold = 365  # Defaults to 365
-
     logger.info("Running the full pipeline")
     TransportDataGouvProcessor.run_all(reload_pipeline=False)
 
@@ -262,4 +270,8 @@ def main(**kwargs):
 if __name__ == "__main__":
     # Set up logger
     setup_logger(level=logging.DEBUG)
+
+    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
+    TransportDataGouvProcessor.force_download = False  # Defaults to False
+    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     main()
