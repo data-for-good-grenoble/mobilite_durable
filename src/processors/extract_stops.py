@@ -74,61 +74,7 @@ class ExtractStopsProcessor(ProcessorMixin):
                         feed_for_agent = gtfs_feed.restrict_to_agencies({agency_id})
                         # gtf-kit fails if there is no "parent_station" in the stops
 
-                        # Extract stops
-                        stops_columns = ["stop_id", "stop_name", "stop_lat", "stop_lon"]
-                        if "stop_code" in gtfs_feed.stops.columns:
-                            stops_columns.insert(
-                                1, "stop_code"
-                            )  # Insert stop_code if it exists
-                        if "stop_desc" in gtfs_feed.stops.columns:
-                            stops_columns.insert(
-                                1, "stop_desc"
-                            )  # Insert stop_desc if it exists
-                        stops = feed_for_agent.stops[stops_columns].copy()
-                        logger.debug(
-                            f"\t\tExtract stops from agency '{agency_name}' with id: {agency_id}"
-                        )
-
-                        # Add agency information to stops
-                        stops.loc[:, "agency_id"] = agency_id
-                        stops.loc[:, "agency_name"] = agency_name
-
-                        # Extract trips and routes to get line information
-                        trips = feed_for_agent.trips[["trip_id", "route_id"]]
-                        routes = feed_for_agent.routes[
-                            ["route_id", "route_short_name", "route_long_name"]
-                        ]
-
-                        # Merge trips with routes to get line information
-                        trip_route = trips.merge(routes, on="route_id", how="left")
-                        logger.debug(
-                            f"\t\tMerge trips with routes for agency '{agency_name}' with id: {agency_id}"
-                        )
-
-                        # For each stop, find the associated lines (trips)
-                        for stop_id in stops["stop_id"]:
-                            # Get the trips that serve this stop
-                            stop_trips = feed_for_agent.stop_times[
-                                feed_for_agent.stop_times["stop_id"] == stop_id
-                            ]
-
-                            # Check if stop_trips is not empty and contains 'trip_id'
-                            if not stop_trips.empty and "trip_id" in stop_trips.columns:
-                                # Get the trip IDs for the stop
-                                trip_ids = stop_trips["trip_id"].tolist()  # Convert to list
-
-                                # Find line information for the trips serving this stop
-                                line_info = trip_route[trip_route["trip_id"].isin(trip_ids)]
-
-                                # If there are associated lines, take the first one (or handle as needed)
-                                if not line_info.empty:
-                                    stops.loc[stops["stop_id"] == stop_id, "line_id"] = (
-                                        line_info["route_id"].iloc[0]
-                                    )
-                                    stops.loc[stops["stop_id"] == stop_id, "line_name"] = (
-                                        line_info["route_short_name"].iloc[0]
-                                    )  # or use 'route_long_name'
-
+                        stops = cls.extract_stops(agency_id, agency_name, feed_for_agent)
                         all_stops.append(stops)
                         logger.info(
                             f"\t\tDone! {len(stops)} stops added from agency '{agency_name}' with id:{agency_id}."
@@ -143,6 +89,61 @@ class ExtractStopsProcessor(ProcessorMixin):
         # Concatenate all stops into a single DataFrame
         combined_stops = pd.concat(all_stops, ignore_index=True)
         return combined_stops
+
+    @classmethod
+    def extract_stops(cls, agency_id, agency_name, feed):
+        """Extract stops"""
+
+        # Columns to extract from the stops in the feed
+        stops_columns = ["stop_id", "stop_name", "stop_lat", "stop_lon"]
+        if "stop_code" in feed.stops.columns:
+            stops_columns.insert(1, "stop_code")  # Insert stop_code if it exists
+        if "stop_desc" in feed.stops.columns:
+            stops_columns.insert(1, "stop_desc")  # Insert stop_desc if it exists
+
+        stops = feed.stops[stops_columns].copy()
+        logger.debug(f"\t\tExtract stops from agency '{agency_name}' with id: {agency_id}")
+
+        # Add agency information to stops
+        stops.loc[:, "agency_id"] = agency_id
+        stops.loc[:, "agency_name"] = agency_name
+
+        # Extract trips and routes to get line information
+        trips = feed.trips[["trip_id", "route_id"]]
+        routes = feed.routes[["route_id", "route_short_name", "route_long_name"]]
+
+        # Merge trips with routes to get line information
+        trip_route = trips.merge(routes, on="route_id", how="left")
+        logger.debug(
+            f"\t\tMerge trips with routes for agency '{agency_name}' with id: {agency_id}"
+        )
+
+        # For each stop, find the associated lines (trips)
+        for stop_id in stops["stop_id"]:
+            # Get the trips that serve this stop
+            stop_trips = feed.stop_times[feed.stop_times["stop_id"] == stop_id]
+
+            # Check if stop_trips is not empty and contains 'trip_id'
+            if not stop_trips.empty and "trip_id" in stop_trips.columns:
+                # Get the trip IDs for the stop
+                trip_ids = stop_trips["trip_id"].tolist()  # Convert to list
+
+                # Find line information for the trips serving this stop
+                line_info = trip_route[trip_route["trip_id"].isin(trip_ids)]
+
+                # If there are associated lines, take the first one (or handle as needed)
+                if not line_info.empty:
+                    stops.loc[stops["stop_id"] == stop_id, "line_id"] = line_info[
+                        "route_id"
+                    ].iloc[0]
+                    stops.loc[stops["stop_id"] == stop_id, "line_name_short"] = line_info[
+                        "route_short_name"
+                    ].iloc[0]
+                    stops.loc[stops["stop_id"] == stop_id, "line_name_long"] = line_info[
+                        "route_long_name"
+                    ].iloc[0]
+
+        return stops
 
     @classmethod
     def run(cls, reload_pipeline: bool = False) -> None:
