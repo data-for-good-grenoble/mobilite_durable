@@ -2,39 +2,35 @@
 This module provides functionality to manage GTFS data pipeline tasks
 such as filtering and downloading datasets from transport.data.gouv.fr.
 
+- for now uses the ProcessorMixin to store the filtered dataset json downloaded from the API
+
 Author: Laurent Sorba
 
 Reference: https://github.com/data-for-good-grenoble/mobilite_durable/issues/4
 
 TODO
-- make it fit better the ProcessorMixin
-  - output is not one file but a set of GTFS, for now storing the dataset json from the API
 - filter better the GTFS
 - delete files which are not in the datasets anymore
-- asynchronous downloads
-- progress bar: download, process
 """
 
-import glob
 import json
 import logging
-import os
-import zipfile
 from datetime import datetime, timedelta
-from enum import Enum
 from pathlib import Path
 
 import requests
+from tqdm import tqdm
 
-from src.processors.utils import ProcessorMixin
 from src.settings import DATA_FOLDER
+from src.utils.downloader_mixin import DownloaderMixin
 from src.utils.logger import setup_logger
+from src.utils.processor_mixin import ProcessorMixin
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 
-class TransportDataGouvProcessor(ProcessorMixin):
+class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     """
     Processor for downloading GTFS data from transport.data.gouv.fr
 
@@ -43,7 +39,7 @@ class TransportDataGouvProcessor(ProcessorMixin):
     2. Filters for public-transit datasets
        and checks that data is recent and has a valid GTFS format
     3. Downloads and saves the GTFS files, skips already downloaded GTFS files
-       optionally force download, gets the latest updates and deletes the old GTFS files.
+       optionally force download.
     """
 
     # Define paths
@@ -101,9 +97,8 @@ class TransportDataGouvProcessor(ProcessorMixin):
         Filter datasets for:
         - type="public-transit"
         - resources containing "bus" mode
-        - resources updated within the last year
+        - resources updated within a specified number of days
         - resources have the available flag set to True
-        - resources last updated within the last year
         - metadata end_date not in the past (if it exists)
 
         TODO:
@@ -171,6 +166,8 @@ class TransportDataGouvProcessor(ProcessorMixin):
                         )
                         continue
 
+                # TODO Add more filters...
+
                 valid_resources.append(resource)
 
             # If we found valid resources, add this dataset to our filtered list
@@ -186,158 +183,80 @@ class TransportDataGouvProcessor(ProcessorMixin):
         return filtered_datasets
 
     @classmethod
-    def download_gtfs_files(cls, datasets):
-        """Download GTFS files from the filtered datasets"""
-
-        status_counts = {
-            TransportDataGouvProcessor.DownloadStatus.DOWNLOADED: 0,
-            TransportDataGouvProcessor.DownloadStatus.SKIPPED: 0,
-            TransportDataGouvProcessor.DownloadStatus.ERROR: 0,
-        }
-
-        # Ensure the output directory exists
-        cls.output_dir.mkdir(parents=True, exist_ok=True)
-
-        logger.info(f"Starting downloads to {cls.output_dir.absolute()}")
-        logger.debug(f"Output directory exists: {cls.output_dir.exists()}")
+    def parse_datasets(cls, datasets):
+        """Parse datasets to extract URLs from its resources"""
 
         # For each dataset
-        for dataset_index, dataset in enumerate(datasets):
+        for dataset_index, dataset in tqdm(
+            enumerate(datasets),
+            total=min(cls.test_limit, len(datasets)),
+            desc="Processing datasets",
+        ):
             # Limit to test_limit datasets for testing
             if cls.test_limit and dataset_index >= cls.test_limit:
-                logger.info(
-                    f"Test limit reached ({cls.test_limit} datasets). Stopping downloads."
+                logger.debug(
+                    f"Test limit reached ({cls.test_limit} datasets). Stopping process."
                 )
                 break
 
             dataset_id = dataset.get("id", "unknown")
-            logger.info(
-                f"Processing dataset {dataset_id} ({dataset_index + 1}/{min(cls.test_limit, len(datasets))})"
-            )
 
-            # For each resource in the dataset
+            # For each resource in the dataset, add url & destination file to the list
             for i, resource in enumerate(dataset.get("resources", [])):
-                status = cls.download_GTFS_from_resource(dataset_id, resource, True)
-                status_counts[status] += 1
-
-        logger.info(
-            f"Download summary: "
-            f"{status_counts[TransportDataGouvProcessor.DownloadStatus.DOWNLOADED]} files downloaded, "
-            f"{status_counts[TransportDataGouvProcessor.DownloadStatus.SKIPPED]} files skipped, "
-            f"{status_counts[TransportDataGouvProcessor.DownloadStatus.ERROR]} errors"
-        )
+                url, download_path = cls.extract_url_from_resource(dataset_id, resource)
+                cls.urls.append(url)
+                cls.destinations.append(download_path)
 
     @classmethod
-    def delete_files(cls, file_dataset_id, file_datagouv_id):
-        # Construct the pattern for the files to delete
-        pattern = f"*_{file_dataset_id}_{file_datagouv_id}.zip"
-
-        # Use glob to find all files matching the pattern
-        search_pattern = os.path.join(cls.output_dir, pattern)
-        files_to_delete = glob.glob(search_pattern)
-
-        # Delete each file found
-        for file in files_to_delete:
-            try:
-                os.remove(file)
-                logger.info(f"\t\tDeleted {file}.")
-            except Exception as ex:
-                logger.error(f"\t\tError deleting {file}: {ex}")
-
-    @classmethod
-    def check_zipfile(cls, output_path):
-        """Validate that it's a valid ZIP file"""
-        # Verify the file was created
-        if not output_path.exists():
-            raise Exception(f"File is not found {output_path.absolute()}")
-
-        try:
-            with zipfile.ZipFile(output_path) as zf:
-                file_list = zf.namelist()
-                logger.debug(f"\t\tZIP file contains {len(file_list)} files")
-        except zipfile.BadZipFile:
-            raise Exception(f"Downloaded file is not a valid ZIP file: {output_path}")
-
-    @classmethod
-    def run(cls, reload_pipeline: bool = False) -> None:
-        """Run the processor to download GTFS data"""
-
-        content = cls.fetch(reload_pipeline=reload_pipeline)
-
-        if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
-            output_content = cls.pre_process(content)
-            cls.save(output_content, cls.output_file)
-
-        # TODO Overridden run() function
-        # To download the GTFS files: we have more than 1 output_file
-        if cls.output_file.exists():
-            with open(cls.output_file, "r") as f:
-                filtered_datasets = json.load(f)
-                cls.download_gtfs_files(filtered_datasets)
-                logger.info(
-                    f"Processed finished. Found {sum(len(d.get('resources', [])) for d in filtered_datasets)} GTFS files from {len(filtered_datasets)} datasets"
-                )
-
-    class DownloadStatus(Enum):
-        DOWNLOADED = "downloaded"
-        SKIPPED = "skipped"
-        ERROR = "error"
-
-    @classmethod
-    def download_GTFS_from_resource(cls, dataset_id, resource, delete_old_files=True):
-        """Get URL from resource and download the GTFS file to output directory"""
+    def extract_url_from_resource(cls, dataset_id, resource) -> tuple[str, Path]:
+        """Extract URL of the GTFS file from resource and create the output path"""
 
         url = resource.get("url")
         datagouv_id = resource.get("datagouv_id")
         updated = resource.get("updated", datetime.now().strftime("%Y-%m-00")).split("T")[0]
         if not url:
-            logger.error(f"\t\tResource {dataset_id}/{datagouv_id} has no URL, skipping.")
-            return TransportDataGouvProcessor.DownloadStatus.SKIPPED
+            raise Exception(f"Resource {dataset_id}/{datagouv_id} has no URL")
 
         # Create a filename based on the updated date, dataset ID and datagouv ID
         filename = f"{updated}_{dataset_id}_{datagouv_id}.zip"
         output_path = cls.output_dir / filename
 
-        # File exists?
-        if output_path.exists() and not cls.force_download:
-            logger.warning(f"\t\tFile {filename} already exists, skipping.")
-            return TransportDataGouvProcessor.DownloadStatus.SKIPPED
+        logger.debug(f"Adding {url} to download to {output_path.absolute()}")
+        return url, output_path
 
-        logger.debug(f"\t\tDownloading {url} to {output_path.absolute()}")
+    @classmethod
+    def run_all(cls, reload_pipeline: bool = False) -> None:
+        """
+        Run the processor to filter datasets/resources
+        and run the downloader to download the GTFS data
+        """
 
-        # Download the file
-        try:
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
+        # Preprocess and filter datasets
+        cls.run(reload_pipeline=reload_pipeline)
 
-            # Delete old files for this dataset_id and datagouv_id
-            if delete_old_files:
-                cls.delete_files(dataset_id, datagouv_id)
+        # Use filtered_datasets.json to download the GTFS files
+        if cls.output_file.exists():
+            with open(cls.output_file, "r") as f:
+                filtered_datasets = json.load(f)
+                cls.parse_datasets(filtered_datasets)
+                logger.info(
+                    f"Processed finished. Found {sum(len(d.get('resources', [])) for d in filtered_datasets)} GTFS files from {len(filtered_datasets)} datasets"
+                )
 
-            # Save the content directly to file
-            with open(output_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-
-            cls.check_zipfile(output_path)
-
-            logger.debug(f"\t\tSuccessfully downloaded to {output_path.absolute()}")
-            logger.debug(f"\t\tFile size: {output_path.stat().st_size} bytes")
-
-            return TransportDataGouvProcessor.DownloadStatus.DOWNLOADED
-
-        except Exception as e:
-            logger.error(f"\t\tERROR downloading {url}: {e}")
-            return TransportDataGouvProcessor.DownloadStatus.ERROR
+                # Download the GTFS files and display status
+                status_counts = cls.download_files()
+                for status, files in status_counts.items():
+                    logger.info(f"Files {status}: {len(files)} - {files}")
+                logger.info("Downloaded all requested GTFS files")
 
 
-def main():
+def main(**kwargs):
     TransportDataGouvProcessor.test_limit = 20  # Defaults to None
     TransportDataGouvProcessor.force_download = False  # Defaults to False
     TransportDataGouvProcessor.resource_validity_days_threshold = 365  # Defaults to 365
 
-    logger.info("Running full pipeline (download)")
-    TransportDataGouvProcessor.run(reload_pipeline=False)
+    logger.info("Running the full pipeline")
+    TransportDataGouvProcessor.run_all(reload_pipeline=False)
 
 
 if __name__ == "__main__":
