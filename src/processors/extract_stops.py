@@ -156,6 +156,7 @@ class ExtractStopsProcessor(ProcessorMixin):
                 line_info = trip_route[trip_route["trip_id"].isin(trip_ids)]
 
                 # If there are associated lines, take the first one (or handle as needed)
+                # TODO: save the list of lines for a stop
                 if not line_info.empty:
                     stops.loc[stops["stop_id"] == stop_id, "line_id"] = line_info[
                         "route_id"
