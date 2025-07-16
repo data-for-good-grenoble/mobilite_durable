@@ -34,6 +34,25 @@ class ExtractStopsProcessor(ProcessorMixin):
     # Limit to x datasets for testing
     test_limit = None
 
+    # Insert line information
+    insert_line_info = True
+
+    # Define the required columns in the desired order
+    required_columns = [
+        "stop_id",
+        "stop_code",
+        "stop_desc",
+        "stop_name",
+        "stop_lat",
+        "stop_lon",
+        "agency_id",
+        "agency_name",
+        "line_id",
+        "line_name_short",
+        "line_name_long",
+        "geometry",
+    ]
+
     @classmethod
     def load_gtfs_stops(cls, gtfs_folder):
         """
@@ -75,6 +94,8 @@ class ExtractStopsProcessor(ProcessorMixin):
                         # gtf-kit fails if there is no "parent_station" in the stops
 
                         stops = cls.extract_stops(agency_id, agency_name, feed_for_agent)
+                        stops = cls.uniformise_stops(stops)
+
                         all_stops.append(stops)
                         logger.info(
                             f"\t\tDone! {len(stops)} stops added from agency '{agency_name}' with id:{agency_id}."
@@ -107,6 +128,9 @@ class ExtractStopsProcessor(ProcessorMixin):
         # Add agency information to stops
         stops.loc[:, "agency_id"] = agency_id
         stops.loc[:, "agency_name"] = agency_name
+
+        if not cls.insert_line_info:
+            return stops
 
         # Extract trips and routes to get line information
         trips = feed.trips[["trip_id", "route_id"]]
@@ -156,14 +180,26 @@ class ExtractStopsProcessor(ProcessorMixin):
             geometry=gpd.points_from_xy(stops_df.stop_lat, stops_df.stop_lon),
             crs="EPSG:4326",  # WGS84
         )
+        # Convert to EPSG:3857 (Web Mercator)
+        gdf = gdf.to_crs(epsg=3857)
 
         # Set pandas options to display all columns
         pd.set_option("display.max_columns", None)  # None means no limit
         pd.set_option("display.expand_frame_repr", False)  # Prevents line breaks in the output
         print(gdf.sample(n=10))
 
-        gdf.to_csv(cls.output_file, index=False)
+        gdf.to_csv(cls.output_file, index=False)  # mode="a", append
         logger.info(f"Saved {len(gdf)} stops to CSV.")
+
+    @classmethod
+    def uniformise_stops(cls, df):
+        # Check for missing columns and add them with default values
+        for col in cls.required_columns:
+            if col not in df.columns:
+                df[col] = None
+
+        # Reorder the DataFrame to match the required column order
+        return df[cls.required_columns]
 
 
 def main(**kwargs):
@@ -175,4 +211,5 @@ if __name__ == "__main__":
     # Set up logger
     setup_logger(level=logging.DEBUG)
     ExtractStopsProcessor.test_limit = 5  # Defaults to None
+    ExtractStopsProcessor.insert_line_info = False  # Defaults to True
     main()
