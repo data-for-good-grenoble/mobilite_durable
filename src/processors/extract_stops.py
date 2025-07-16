@@ -47,9 +47,7 @@ class ExtractStopsProcessor(ProcessorMixin):
         "stop_lon",
         "agency_id",
         "agency_name",
-        "line_id",
-        "line_name_short",
-        "line_name_long",
+        "stop_lines",
         "geometry",
     ]
 
@@ -83,6 +81,10 @@ class ExtractStopsProcessor(ProcessorMixin):
                     # Extract agency information
                     agencies = gtfs_feed.agency[["agency_id", "agency_name"]]
                     logger.debug(f"\t\tRead feed {gtfs_path}. Found {len(agencies)} agencies.")
+
+                    # Handle missing parent_station column
+                    if "parent_station" not in gtfs_feed.stops.columns:
+                        gtfs_feed.stops["parent_station"] = None
 
                     # For each agency in the feed
                     for _, agency in agencies.iterrows():
@@ -142,31 +144,40 @@ class ExtractStopsProcessor(ProcessorMixin):
             f"\t\tMerge trips with routes for agency '{agency_name}' with id: {agency_id}"
         )
 
-        # For each stop, find the associated lines (trips)
-        for stop_id in stops["stop_id"]:
-            # Get the trips that serve this stop
-            stop_trips = feed.stop_times[feed.stop_times["stop_id"] == stop_id]
+        # Get stop_times and merge with trip_route to get line info for each stop
+        stop_times = feed.stop_times[["stop_id", "trip_id"]]
+        stop_lines = stop_times.merge(trip_route, on="trip_id", how="left")
 
-            # Check if stop_trips is not empty and contains 'trip_id'
-            if not stop_trips.empty and "trip_id" in stop_trips.columns:
-                # Get the trip IDs for the stop
-                trip_ids = stop_trips["trip_id"].tolist()  # Convert to list
+        # Remove duplicates to get unique stop-route combinations
+        stop_lines = stop_lines.drop_duplicates(subset=["stop_id", "route_id"])
 
-                # Find line information for the trips serving this stop
-                line_info = trip_route[trip_route["trip_id"].isin(trip_ids)]
+        # Group by stop_id and create the line information list
+        lines_per_stop = (
+            stop_lines.groupby("stop_id")
+            .apply(
+                lambda x: [
+                    {
+                        "line_id": row["route_id"],
+                        "line_name_short": row["route_short_name"],
+                        "line_name_long": row["route_long_name"],
+                    }
+                    for _, row in x.iterrows()
+                ],
+                include_groups=False,
+            )
+            .reset_index()
+        )
 
-                # If there are associated lines, take the first one (or handle as needed)
-                # TODO: save the list of lines for a stop
-                if not line_info.empty:
-                    stops.loc[stops["stop_id"] == stop_id, "line_id"] = line_info[
-                        "route_id"
-                    ].iloc[0]
-                    stops.loc[stops["stop_id"] == stop_id, "line_name_short"] = line_info[
-                        "route_short_name"
-                    ].iloc[0]
-                    stops.loc[stops["stop_id"] == stop_id, "line_name_long"] = line_info[
-                        "route_long_name"
-                    ].iloc[0]
+        # Rename the column to match your desired structure
+        lines_per_stop.columns = ["stop_id", "stop_lines"]
+
+        # Merge the stops DataFrame with the lines_per_stop DataFrame
+        stops = stops.merge(lines_per_stop, on="stop_id", how="left")
+
+        # Fill NaN values with empty lists for stops without lines
+        stops["stop_lines"] = stops["stop_lines"].apply(
+            lambda x: x if isinstance(x, list) else []
+        )
 
         return stops
 
@@ -212,5 +223,5 @@ if __name__ == "__main__":
     # Set up logger
     setup_logger(level=logging.DEBUG)
     ExtractStopsProcessor.test_limit = 5  # Defaults to None
-    ExtractStopsProcessor.insert_line_info = False  # Defaults to True
+    ExtractStopsProcessor.insert_line_info = True  # Defaults to True
     main()
