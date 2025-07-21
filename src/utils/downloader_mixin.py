@@ -39,14 +39,13 @@ class DownloaderMixin:
         :return: A tuple containing the status of the download and the filename.
         """
         try:
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-
-            # File exists?
+            # File exists? or force download
             if os.path.exists(destination) and not force_download:
                 logger.warning(f"File {destination} already exists, skipping.")
                 return DownloadStatus.SKIPPED, destination.name
 
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
             logger.debug(f"Downloading {url} to {destination}")
 
             with (
