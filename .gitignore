@@ -177,3 +177,4 @@ src/data/transportdatagouv/
 errors.jsonl
 errors.log
 src/data/**/*_output.*
+.vscode

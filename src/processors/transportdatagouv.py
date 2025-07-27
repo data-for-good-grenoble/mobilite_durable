@@ -193,12 +193,15 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     def parse_datasets(cls, datasets):
         """Parse datasets to extract URLs from its resources"""
         if cls.test_limit is None:
-            cls.test_limit = len(datasets)
+            total = len(datasets)
+            logger.warning("Test limit is not set, processing all datasets")
+        else:
+            total = min(cls.test_limit, len(datasets))
 
         # For each dataset
         for dataset_index, dataset in tqdm(
             enumerate(datasets),
-            total=min(cls.test_limit, len(datasets)),
+            total=total,
             desc="Processing datasets",
         ):
             # Limit to test_limit datasets for testing
