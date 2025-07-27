@@ -58,10 +58,10 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     resource_validity_days_threshold = 365
 
     # Limit to x datasets for testing
-    test_limit = None
+    test_limit: int | None = None
 
     # Needed from ProcessorMixin
-    api_class = True
+    api_class = True # TODO: Fix MyPy error
 
     @classmethod
     def fetch_from_api(cls, **kwargs):
@@ -189,6 +189,8 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     @classmethod
     def parse_datasets(cls, datasets):
         """Parse datasets to extract URLs from its resources"""
+        if cls.test_limit is None:
+            cls.test_limit = len(datasets)
 
         # For each dataset
         for dataset_index, dataset in tqdm(
@@ -206,7 +208,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
             dataset_id = dataset.get("id", "unknown")
 
             # For each resource in the dataset, add url & destination file to the list
-            for i, resource in enumerate(dataset.get("resources", [])):
+            for resource in dataset.get("resources", []):
                 url, download_path = cls.extract_url_from_resource(dataset_id, resource)
                 cls.urls.append(url)
                 cls.destinations.append(download_path)
@@ -223,6 +225,8 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
         # Create a filename based on the updated date, dataset ID and datagouv ID
         filename = f"{updated}_{dataset_id}_{datagouv_id}.zip"
+        if cls.output_dir is None:
+            raise ValueError("Output directory is not defined. Please set `output_dir`.")
         output_path = cls.output_dir / filename
 
         logger.debug(f"Adding {url} to download to {output_path.absolute()}")
@@ -234,11 +238,12 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
         Run the processor to filter datasets/resources
         and run the downloader to download the GTFS data
         """
-
-        # Preprocess and filter datasets
-        content = cls.fetch(reload_pipeline=reload_pipeline)
+        if cls.output_file is None:
+            raise ValueError("Output file is not defined. Please set `output_file`.")
 
         if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
+            # Preprocess and filter datasets
+            content = cls.fetch(reload_pipeline=reload_pipeline)
             output_content = cls.pre_process(content)
             cls.save(output_content, cls.output_file)
 
@@ -260,6 +265,10 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                 for status, files in status_counts.items():
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
+        else:
+            logger.warning(
+                f"Output file {cls.output_file} does not exist. No processing done."
+            )
 
 
 def main(**kwargs):
