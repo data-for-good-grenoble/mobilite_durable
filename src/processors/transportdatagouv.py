@@ -271,6 +271,27 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                 for status, files in status_counts.items():
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
+
+                # Delete old files that are not in the destinations
+                # ASSUMPTION: all files are zip format and in the same directory as the first destination
+                if len(cls.destinations) > 0:
+                    first_dir = cls.destinations[0].parent
+                    zip_files_in_dir = filter(lambda f: f.suffix == ".zip", first_dir.iterdir())
+                    files_to_delete = list(
+                        filter(lambda f: f not in cls.destinations, zip_files_in_dir)
+                    )
+                    logger.info(f"{len(files_to_delete)} old files to delete")
+                    for file in files_to_delete:
+                        try:
+                            file.unlink()
+                            logger.info(f"Deleted old file: {file}")
+                        except Exception as e:
+                            logger.error(f"Failed to delete {file}: {e}")
+
+                else:
+                    logger.warning(
+                        "Fail to delete old files because no destinations were found."
+                    )
         else:
             logger.warning(f"Output file {cls.output_file} does not exist. No processing done.")
 
