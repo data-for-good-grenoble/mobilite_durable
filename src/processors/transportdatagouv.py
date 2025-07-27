@@ -57,6 +57,9 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     # Force download even if the GTFS already exists
     force_download = False
 
+    # Delete old files that are no more in transportdatagouv datasets
+    delete_old_files = True
+
     # Number of days a resource is considered valid
     resource_validity_days_threshold = 365
 
@@ -246,6 +249,8 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
         """
         if cls.output_file is None:
             raise ValueError("Output file is not defined. Please set `output_file`.")
+        if cls.output_dir is None:
+            raise ValueError("Output directory is not defined. Please set `output_dir`.")
 
         if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
             # Preprocess and filter datasets
@@ -272,11 +277,11 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
 
-                # Delete old files that are not in the destinations
-                # ASSUMPTION: all files are zip format and in the same directory as the first destination
-                if len(cls.destinations) > 0:
-                    first_dir = cls.destinations[0].parent
-                    zip_files_in_dir = filter(lambda f: f.suffix == ".zip", first_dir.iterdir())
+                # Delete old ZIP files that are not in the destinations
+                if cls.delete_old_files:
+                    zip_files_in_dir = filter(
+                        lambda f: f.suffix == ".zip", cls.output_dir.iterdir()
+                    )
                     files_to_delete = list(
                         filter(lambda f: f not in cls.destinations, zip_files_in_dir)
                     )
