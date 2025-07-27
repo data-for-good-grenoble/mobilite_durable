@@ -64,7 +64,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     test_limit: int | None = None
 
     # Needed from ProcessorMixin
-    api_class = True # TODO: Fix MyPy error
+    api_class = True  # TODO: Fix MyPy error
 
     @classmethod
     def fetch_from_api(cls, **kwargs):
@@ -272,21 +272,21 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
         else:
-            logger.warning(
-                f"Output file {cls.output_file} does not exist. No processing done."
-            )
+            logger.warning(f"Output file {cls.output_file} does not exist. No processing done.")
 
 
 def main(**kwargs):
+    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
+    TransportDataGouvProcessor.force_download = False  # Defaults to False
+    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     logger.info("Running the full pipeline")
-    TransportDataGouvProcessor.run_all(reload_pipeline=TransportDataGouvProcessor.reload_pipeline)
+    TransportDataGouvProcessor.run_all(
+        reload_pipeline=TransportDataGouvProcessor.reload_pipeline
+    )
 
 
 if __name__ == "__main__":
     # Set up logger
     setup_logger(level=logging.DEBUG)
 
-    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
-    TransportDataGouvProcessor.force_download = False  # Defaults to False
-    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     main()
