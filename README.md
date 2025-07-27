@@ -43,8 +43,17 @@ uv pip install ".[dev,test]"
 ```
 
 ## Activer l'environnement virtuel
+
+macOS and Linux:
+
 ```sh
 source .venv/bin/activate
+```
+
+windows:
+
+```sh
+.venv\Scripts\activate
 ```
 
 ## Activation du pre-commit
