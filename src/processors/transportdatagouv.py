@@ -51,6 +51,9 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     # API URL
     API_URL = "https://transport.data.gouv.fr/api/datasets"
 
+    # Reload filrtered datasets
+    reload_pipeline = False
+
     # Force download even if the GTFS already exists
     force_download = False
 
@@ -273,7 +276,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
 def main(**kwargs):
     logger.info("Running the full pipeline")
-    TransportDataGouvProcessor.run_all(reload_pipeline=False)
+    TransportDataGouvProcessor.run_all(reload_pipeline=TransportDataGouvProcessor.reload_pipeline)
 
 
 if __name__ == "__main__":
