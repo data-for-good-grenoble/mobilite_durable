@@ -4,8 +4,8 @@ from typing import Pattern
 
 import pandas as pd
 
-from src.processors.utils import ProcessorMixin
 from src.settings import DATA_FOLDER
+from src.utils.processor_mixin import ProcessorMixin
 
 
 class C2cItiProcessor(ProcessorMixin):
