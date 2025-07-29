@@ -56,6 +56,18 @@ windows:
 .venv\Scripts\activate
 ```
 
+## Exécuter un script
+
+```sh
+python main.py path/to/script.py
+```
+
+ou si on n'a pas activé l'environnement
+
+```sh
+uv run main.py path/to/script.py
+```
+
 ## Activation du pre-commit
 
 ```sh
