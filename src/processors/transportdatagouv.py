@@ -51,17 +51,23 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     # API URL
     API_URL = "https://transport.data.gouv.fr/api/datasets"
 
+    # Reload filrtered datasets
+    reload_pipeline = False
+
     # Force download even if the GTFS already exists
     force_download = False
+
+    # Delete old files that are no more in transportdatagouv datasets
+    delete_old_files = True
 
     # Number of days a resource is considered valid
     resource_validity_days_threshold = 365
 
     # Limit to x datasets for testing
-    test_limit = None
+    test_limit: int | None = None
 
     # Needed from ProcessorMixin
-    api_class = True
+    api_class = True  # TODO: Fix MyPy error
 
     @classmethod
     def fetch_from_api(cls, **kwargs):
@@ -189,11 +195,16 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     @classmethod
     def parse_datasets(cls, datasets):
         """Parse datasets to extract URLs from its resources"""
+        if cls.test_limit is None:
+            total = len(datasets)
+            logger.warning("Test limit is not set, processing all datasets")
+        else:
+            total = min(cls.test_limit, len(datasets))
 
         # For each dataset
         for dataset_index, dataset in tqdm(
             enumerate(datasets),
-            total=min(cls.test_limit, len(datasets)),
+            total=total,
             desc="Processing datasets",
         ):
             # Limit to test_limit datasets for testing
@@ -206,7 +217,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
             dataset_id = dataset.get("id", "unknown")
 
             # For each resource in the dataset, add url & destination file to the list
-            for i, resource in enumerate(dataset.get("resources", [])):
+            for resource in dataset.get("resources", []):
                 url, download_path = cls.extract_url_from_resource(dataset_id, resource)
                 cls.urls.append(url)
                 cls.destinations.append(download_path)
@@ -223,6 +234,8 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
         # Create a filename based on the updated date, dataset ID and datagouv ID
         filename = f"{updated}_{dataset_id}_{datagouv_id}.zip"
+        if cls.output_dir is None:
+            raise ValueError("Output directory is not defined. Please set `output_dir`.")
         output_path = cls.output_dir / filename
 
         logger.debug(f"Adding {url} to download to {output_path.absolute()}")
@@ -234,11 +247,14 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
         Run the processor to filter datasets/resources
         and run the downloader to download the GTFS data
         """
-
-        # Preprocess and filter datasets
-        content = cls.fetch(reload_pipeline=reload_pipeline)
+        if cls.output_file is None:
+            raise ValueError("Output file is not defined. Please set `output_file`.")
+        if cls.output_dir is None:
+            raise ValueError("Output directory is not defined. Please set `output_dir`.")
 
         if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
+            # Preprocess and filter datasets
+            content = cls.fetch(reload_pipeline=reload_pipeline)
             output_content = cls.pre_process(content)
             cls.save(output_content, cls.output_file)
 
@@ -261,17 +277,42 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
 
+                # Delete old ZIP files that are not in the destinations
+                if cls.delete_old_files:
+                    zip_files_in_dir = filter(
+                        lambda f: f.suffix == ".zip", cls.output_dir.iterdir()
+                    )
+                    files_to_delete = list(
+                        filter(lambda f: f not in cls.destinations, zip_files_in_dir)
+                    )
+                    logger.info(f"{len(files_to_delete)} old files to delete")
+                    for file in files_to_delete:
+                        try:
+                            file.unlink()
+                            logger.info(f"Deleted old file: {file}")
+                        except Exception as e:
+                            logger.error(f"Failed to delete {file}: {e}")
+
+                else:
+                    logger.warning(
+                        "Fail to delete old files because no destinations were found."
+                    )
+        else:
+            logger.warning(f"Output file {cls.output_file} does not exist. No processing done.")
+
 
 def main(**kwargs):
+    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
+    TransportDataGouvProcessor.force_download = False  # Defaults to False
+    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     logger.info("Running the full pipeline")
-    TransportDataGouvProcessor.run_all(reload_pipeline=False)
+    TransportDataGouvProcessor.run_all(
+        reload_pipeline=TransportDataGouvProcessor.reload_pipeline
+    )
 
 
 if __name__ == "__main__":
     # Set up logger
     setup_logger(level=logging.DEBUG)
 
-    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
-    TransportDataGouvProcessor.force_download = False  # Defaults to False
-    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     main()
