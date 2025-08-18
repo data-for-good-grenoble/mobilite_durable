@@ -42,9 +42,18 @@ uv sync
 uv pip install ".[dev,test]"
 ```
 
-## Activer l'environnement virtuel
+## [Activer l'environnement virtuel](https://docs.astral.sh/uv/pip/environments/#using-a-virtual-environment)
+
+macOS and Linux:
+
 ```sh
 source .venv/bin/activate
+```
+
+windows:
+
+```sh
+.venv\Scripts\activate
 ```
 
 ## Activation du pre-commit

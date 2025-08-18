@@ -1,6 +1,8 @@
 import json
 import logging
 
+import src.settings as settings
+
 
 class JsonlFormatter(logging.Formatter):
     def format(self, record) -> str:
@@ -17,17 +19,17 @@ class JsonlFormatter(logging.Formatter):
 
 
 def setup_logger(
-    level: int = logging.INFO,
+    level: int = settings.LOGGER_LEVEL,
     datefmt: str = "%Y-%m-%d %H:%M:%S",
     format: str = "%(asctime)s - %(levelname)s - %(name)s|%(funcName)s:%(lineno)d - %(message)s",
+    name: str = "main",
 ):
     """Configuration globale du logger"""
-    logger = logging.getLogger()
+    logger = logging.getLogger(name)
     logger.setLevel(level)
 
     # logger console
     log_console = logging.StreamHandler()
-    log_console.setLevel(logging.INFO)
     log_console.setFormatter(logging.Formatter(format))
     logger.addHandler(log_console)
 
