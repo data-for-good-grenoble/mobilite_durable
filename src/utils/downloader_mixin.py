@@ -1,8 +1,8 @@
 import logging
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-import time
 from typing import List
 
 import requests
@@ -54,10 +54,14 @@ class DownloaderMixin:
                 response = requests.get(url, stream=True, timeout=timeout)
 
                 # If we get a 429 or a 503, retry if we have attempts left
-                if (response.status_code == 429 or response.status_code == 503) and attempt < max_retries:
+                if (
+                    response.status_code == 429 or response.status_code == 503
+                ) and attempt < max_retries:
                     # Get retry delay from header, default to 5 seconds
                     retry_after = int(response.headers.get("Retry-After", 2 * (attempt + 1)))
-                    logger.warning(f"Error when downloading {url}, retrying after {retry_after} seconds...")
+                    logger.warning(
+                        f"Error when downloading {url}, retrying after {retry_after} seconds..."
+                    )
                     time.sleep(retry_after)
                     continue
 
@@ -91,7 +95,9 @@ class DownloaderMixin:
         return DownloadStatus.ERROR, destination.name
 
     @classmethod
-    def download_files(cls, force_download=False, max_retries=3, timeout=60) -> dict[str, list[str]]:
+    def download_files(
+        cls, force_download=False, max_retries=3, timeout=60
+    ) -> dict[str, list[str]]:
         """
         Download multiple files from a list of URLs to specified destinations in parallel.
 
@@ -109,7 +115,9 @@ class DownloaderMixin:
 
         with ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(cls.download_file, url, dest, force_download, max_retries, timeout): (url, dest)
+                executor.submit(
+                    cls.download_file, url, dest, force_download, max_retries, timeout
+                ): (url, dest)
                 for url, dest in zip(cls.urls, cls.destinations, strict=True)
             }
             for future in tqdm(

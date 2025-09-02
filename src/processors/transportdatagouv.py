@@ -278,7 +278,9 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                     cls.urls = cls.urls[: cls.test_limit]
                     cls.destinations = cls.destinations[: cls.test_limit]
 
-                status_counts = cls.download_files(cls.force_download, cls.max_retries, cls.timeout)
+                status_counts = cls.download_files(
+                    cls.force_download, cls.max_retries, cls.timeout
+                )
                 for status, files in status_counts.items():
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
