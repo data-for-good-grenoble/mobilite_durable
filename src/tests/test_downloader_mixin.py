@@ -70,6 +70,38 @@ class TestDownloaderMixin(unittest.TestCase):
         assert filename == destination.name
         assert not os.path.exists(destination)  # Ensure the file was not created
 
+    @patch("requests.get")
+    def test_download_file_retry_after_429(self, mock_get):
+        # First response: 429 Too Many Requests
+        mock_response_429 = MagicMock()
+        mock_response_429.status_code = 429
+        mock_response_429.raise_for_status.side_effect = requests.exceptions.HTTPError
+
+        # Second response: 200 OK
+        mock_response_200 = MagicMock()
+        mock_response_200.status_code = 200
+        mock_response_200.headers = {"content-length": "1024"}
+        mock_response_200.iter_content.return_value = [
+            b"data"
+        ] * 256  # Simulate 1024 bytes of data
+
+        # Configure mock to return 429 first, then 200
+        mock_get.side_effect = [mock_response_429, mock_response_200]
+
+        destination = Path("retry_file.txt")
+        status, filename = DownloaderMixin.download_file(
+            "http://example.com/retry_file.txt", destination
+        )
+
+        # Verify that get was called twice
+        assert mock_get.call_count == 2
+        assert status == DownloadStatus.DOWNLOADED
+        assert filename == destination.name
+        assert os.path.exists(destination)
+
+        # Clean up
+        os.remove(destination)
+
 
 if __name__ == "__main__":
     unittest.main()

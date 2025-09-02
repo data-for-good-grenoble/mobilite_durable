@@ -57,6 +57,12 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     # Force download even if the GTFS already exists
     force_download = False
 
+    # Maximum number of retries for downloads
+    max_retries = 3
+
+    # Timeout for download requests
+    timeout = 60
+
     # Delete old files that are no more in transportdatagouv datasets
     delete_old_files = True
 
@@ -272,7 +278,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                     cls.urls = cls.urls[: cls.test_limit]
                     cls.destinations = cls.destinations[: cls.test_limit]
 
-                status_counts = cls.download_files()
+                status_counts = cls.download_files(cls.force_download, cls.max_retries, cls.timeout)
                 for status, files in status_counts.items():
                     logger.info(f"Files {status}: {len(files)} - {files}")
                 logger.info("Downloaded all requested GTFS files")
