@@ -1,10 +1,9 @@
-""" Scrapy spider to scrape bus line information from Transit App website.
+"""Scrapy spider to scrape bus line information from Transit App website.
 
 Author: Nicolas Grosjean
 
 Reference: https://github.com/data-for-good-grenoble/mobilite_durable/issues/54
 """
-
 
 import scrapy
 from scrapy.http import Response
@@ -52,15 +51,18 @@ class TransitSpider(scrapy.Spider):
                 }
 
     def parse_bus_line(self, response: Response):
-        self.logger.info(f"Processing bus line {self.processing_bus_line_number + 1}/{self.total_bus_line_number}")
+        self.logger.info(
+            f"Processing bus line {self.processing_bus_line_number + 1}/{self.total_bus_line_number}"
+        )
         self.processing_bus_line_number += 1
         bus_line_number = response.meta.get("bus_line_number")
         bus_line_name = response.meta.get("bus_line_name")
         bus_line_url = response.meta.get("bus_line_url")
 
-
         # Search stops with RouteStationsList class
-        stop_and_hours = response.xpath('//div[contains(@class, "RouteStationsList")]//text()').extract()
+        stop_and_hours = response.xpath(
+            '//div[contains(@class, "RouteStationsList")]//text()'
+        ).extract()
         stop_names = stop_and_hours[::2]
         yield {
             "bus_line_number": bus_line_number,
