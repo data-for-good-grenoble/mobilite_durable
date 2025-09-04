@@ -1,4 +1,13 @@
+""" Scrapy spider to scrape bus line information from Transit App website.
+
+Author: Nicolas Grosjean
+
+Reference: https://github.com/data-for-good-grenoble/mobilite_durable/issues/54
+"""
+
+
 import scrapy
+from scrapy.http import Response
 
 
 class TransitSpider(scrapy.Spider):
@@ -7,7 +16,7 @@ class TransitSpider(scrapy.Spider):
         "https://transitapp.com/fr/region/grenoble/ara-cars-r%C3%A9gion-is%C3%A8re-scolaire",
     ]
 
-    def parse(self, response):
+    def parse(self, response: Response):
         # Search lines with the class "padding-route-image"
         bus_line_paths = response.xpath('//div[contains(@class, "padding-route-image")]')
         for bus_line_path in bus_line_paths:
@@ -29,7 +38,7 @@ class TransitSpider(scrapy.Spider):
                     },
                 )
 
-    def parse_bus_line(self, response):
+    def parse_bus_line(self, response: Response):
         bus_line_number = response.meta.get("bus_line_number")
         bus_line_name = response.meta.get("bus_line_name")
 
