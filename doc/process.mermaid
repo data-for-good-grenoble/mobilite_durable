@@ -19,13 +19,12 @@ flowchart TD
 
 
         FE_TDG -->|"`__gtf_extractor.py__
-                    Extrait les arrêts et lignes`"| EXPORT_TDG[("`CSV
-                    GeoJSON`")]
+                    Extrait les arrêts et lignes`"| EXPORT_TDG[("`GeoParquet
+                    GeoJSON
+                    CSV`")]
         PFE_TRANSIT --> EXPORT_TRANSIT[("`...`")]
-        PFE_OSM --> EXPORT_OSM[("`CSV
-                    GeoJSON`")]
-        PFE_C2C --> EXPORT_C2C[("`CSV
-                    GeoJSON`")]
+        PFE_OSM --> EXPORT_OSM[("`...`")]
+        PFE_C2C --> EXPORT_C2C[("`CSV`")]
         EXPORT_TDG --> ANALYSE{"`Analyse
                     et regroupement
                     des données`"}
@@ -48,8 +47,7 @@ flowchart TD
         IDENTIFIER -->|...| LIGNES_MANQUANTES["`fa:fa-bus Lignes
                     manquantes`"]
         ARRETS_MANQUANTS -->|"`__visualise_stops_diff.py__
-                créé un geoJSON avec un code couleur`"| DIFF[("`Geo
-                    JSON`")]
+                créé un geoJSON avec un code couleur`"| DIFF[("`GeoJSON`")]
         ENRICHIR --> PRIX[fa:fa-eur Prix]
         ENRICHIR --> VELO[fa:fa-bicycle Vélo]
         ENRICHIR --> SPECIAUX[fa:fa-graduation-cap  Réservé scolaire]
@@ -67,12 +65,12 @@ flowchart TD
         style LIGNES_MANQUANTES stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
         style EXPORT_OSM stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
         style EXPORT_C2C stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
-        style EXPORT_C2C stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
         style EXPORT_TRANSIT stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
     %% In progress
         style PF_TDG stroke:#00f,stroke-width:2px
         style FE_TDG stroke:#00f,stroke-width:2px
         style EXPORT_TDG stroke:#00f,stroke-width:2px
+        style EXPORT_C2C stroke:#00f,stroke-width:
         style ARRETS_MANQUANTS stroke:#00f,stroke-width:2px
         style DIFF stroke:#00f,stroke-width:2px
         style PFE_TRANSIT stroke:#00f,stroke-width:2px

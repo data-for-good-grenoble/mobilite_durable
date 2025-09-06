@@ -8,9 +8,6 @@ Author: Laurent Sorba
 
 Reference: https://github.com/data-for-good-grenoble/mobilite_durable/issues/4
 
-TODO
-- filter better the GTFS
-- delete files which are not in the datasets anymore
 """
 
 import json
@@ -133,11 +130,16 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
             valid_resources = []
             for resource in dataset.get("resources", []):
                 # Check if resource has bus or coach or tramway mode
-                if (
-                    "bus" not in resource.get("modes", [])
-                    and "coach" not in resource.get("modes", [])
-                    and "tramway" not in resource.get("modes", [])
-                ):
+                modes = resource.get("modes", [])
+                has_desired_mode = any(
+                    mode in modes for mode in ["bus", "coach", "tramway", "cable_car"]
+                )
+                # has_rail = "rail" in modes
+
+                if not has_desired_mode:  # or has_rail:
+                    logger.info(
+                        f"Not a desired mode in GTFS: {dataset.get('id', 'unknown')}. Skipping."
+                    )
                     continue
 
                 if "GTFS" not in resource.get("format", ""):
@@ -310,7 +312,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
 
 def main(**kwargs):
-    TransportDataGouvProcessor.test_limit = 20  # Defaults to None
+    TransportDataGouvProcessor.test_limit = None  # Defaults to None
     TransportDataGouvProcessor.force_download = False  # Defaults to False
     TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     logger.info("Running the full pipeline")
