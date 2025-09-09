@@ -70,7 +70,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     test_limit: int | None = None
 
     # Needed from ProcessorMixin
-    api_class = True  # TODO: Fix MyPy error
+    api_class = True
 
     @classmethod
     def fetch_from_api(cls, **kwargs):

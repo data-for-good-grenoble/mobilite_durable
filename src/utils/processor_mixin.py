@@ -9,7 +9,7 @@ class ProcessorMixin:
     output_file va permettre de trouver le fichier de sortie, sauvegarde modifiée de l'input_file
     """
 
-    api_class: Type | None = None
+    api_class: bool | None = None
     input_dir: Path | None = None
     input_file: Path | None = None
     output_dir: Path | None = None
@@ -43,6 +43,9 @@ class ProcessorMixin:
                 content = cls.fetch_from_api()
                 if cls.input_file:
                     cls.save(content, cls.input_file)
+                processed = cls.pre_process(content)
+                if cls.output_file:
+                    cls.save(processed, cls.output_file)
                 return content
 
         def fetch_from_input_file():

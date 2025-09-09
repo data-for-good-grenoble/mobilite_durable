@@ -1,0 +1,144 @@
+"""
+This module provides functionality to getting OpenStreetMap data using the Overpass API.
+
+Author: Nicolas Grosjean
+"""
+
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+
+from src.settings import DATA_FOLDER
+from src.utils.logger import setup_logger
+from src.utils.processor_mixin import ProcessorMixin
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
+
+class AbstractOSMProcessor(ProcessorMixin):
+    # Define paths
+    input_dir = DATA_FOLDER / "OSM"
+    output_dir = input_dir
+
+    # API declaration
+    api_class = True
+    API_URL = "https://overpass-api.de/api/interpreter"
+
+    @classmethod
+    def query_overpass(cls, query: str, timeout: int) -> dict:
+        """
+        Query Overpass API.
+
+        Args:
+            query: Overpass QL query
+            timeout: Query timeout in seconds
+
+        Returns:
+            JSON response from the API
+        """
+        response = requests.post(
+            cls.API_URL,
+            data={"data": query},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    @classmethod
+    def fetch_from_file(cls, path: Path, **kwargs):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    @classmethod
+    def save(cls, content, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(content, f, ensure_ascii=False, indent=2)
+
+
+class OSMBusStopsProcessor(AbstractOSMProcessor):
+    input_file = AbstractOSMProcessor.input_dir / "raw_bus_stops_isere.geojson"
+    output_file = AbstractOSMProcessor.output_dir / "bus_stops_isere.geojson"
+
+    @classmethod
+    def fetch_from_api(cls, **kwargs) -> dict | None:
+        # TODO Set timeout and department in variables
+        query = """
+        [out:json][timeout:600];
+        area["name"="Isère"]["boundary"="administrative"]->.searchArea;
+        node["highway"="bus_stop"](area.searchArea);
+        out geom;
+        """
+        return cls.query_overpass(query, 600)
+
+    @classmethod
+    def pre_process(cls, content, **kwargs) -> dict:
+        features = []
+        for element in content.get("elements", []):
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [element["lon"], element["lat"]],
+                },
+                "properties": element.get("tags", {}),
+                "id": element.get("id"),
+            }
+            features.append(feature)
+        return {
+            "type": "FeatureCollection",
+            "generator": content.get("generator", "overpass-turbo"),
+            "copyright": content.get(
+                "copyright",
+                "The data included in this document is from www.openstreetmap.org. "
+                "The data is made available under ODbL.",
+            ),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "features": features,
+        }
+
+
+class OSMBusLinesProcessor(AbstractOSMProcessor):
+    input_file = AbstractOSMProcessor.input_dir / "raw_bus_lines_isere.geojson"
+    output_file = AbstractOSMProcessor.output_dir / "bus_lines_isere.json"
+
+    @classmethod
+    def fetch_from_api(cls, **kwargs) -> dict | None:
+        # TODO Set timeout and department in variables
+        query = """
+        [out:json][timeout:600];
+        area["name"="Isère"]["boundary"="administrative"]->.searchArea;
+        relation["type"="route"]["route"="bus"](area.searchArea);
+        out;
+        """
+        return cls.query_overpass(query, 600)
+
+    @classmethod
+    def pre_process(cls, content, **kwargs) -> list[dict]:
+        res = []
+        for element in content["elements"]:
+            if element["type"] == "relation":
+                relation = {"id": element["id"], "tags": element["tags"], "stops": []}
+                for member in element["members"]:
+                    if member["role"] == "stop":
+                        relation["stops"].append(member["ref"])
+                res.append(relation)
+        return res
+
+
+def main(**kwargs):
+    reload_pipeline = False
+    OSMBusStopsProcessor.run(reload_pipeline)
+    OSMBusLinesProcessor.run(reload_pipeline)
+
+
+if __name__ == "__main__":
+    # Set up logger
+    setup_logger(level=logging.DEBUG)
+
+    main()
