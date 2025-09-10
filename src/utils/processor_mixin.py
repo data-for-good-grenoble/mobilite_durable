@@ -1,15 +1,14 @@
 from pathlib import Path
-from typing import Type
 
 
 class ProcessorMixin:
     """
-    api_class va permettre d'aller récupérer la donnée en ligne
-    input_file va permettre de trouver le fichier d'entrée, sauvegarde non modifiée de l'api_class
+    is_api permet de savoir si la classe est liée à une API
+    input_file va permettre de trouver le fichier d'entrée, sauvegarde non modifiée de l'api
     output_file va permettre de trouver le fichier de sortie, sauvegarde modifiée de l'input_file
     """
 
-    api_class: bool | None = None
+    is_api: bool | None = None
     input_dir: Path | None = None
     input_file: Path | None = None
     output_dir: Path | None = None
@@ -33,28 +32,28 @@ class ProcessorMixin:
         Lors d'un process où `reload_pipeline` is False (cas par défaut) :
             - on va regarder l'output_file, s'il n'existe pas ou s'il n'est pas configuré
             - on va regarder l'input_file, que l'on va procésser, s'il n'existe pas ou s'il n'est pas configuré
-            - on va regarder l'api_class, pour télécharger la donnée et la sauvegarder, s'il n'existe pas, une exception est levée
+            - on va regarder l'api, pour télécharger la donnée et la sauvegarder, s'il n'existe pas, une exception est levée
         Lors d'un process où `reload_pipeline` is True, le process est inversé
         """
 
         # TODO: fetch_from_api si le fichier de l'url a été mis à jour
         def fetch_from_api():
-            if cls.api_class:
+            if cls.is_api:
                 content = cls.fetch_from_api()
                 if cls.input_file:
                     cls.save(content, cls.input_file)
-                processed = cls.pre_process(content)
-                if cls.output_file:
-                    cls.save(processed, cls.output_file)
-                return content
+                return fetch_from_loaded_input_file(content)
+
+        def fetch_from_loaded_input_file(content):
+            processed = cls.pre_process(content)
+            if cls.output_file:
+                cls.save(processed, cls.output_file)
+            return content
 
         def fetch_from_input_file():
             if cls.input_file and cls.input_file.exists():
                 content = cls.fetch_from_file(cls.input_file)
-                processed = cls.pre_process(content)
-                if cls.output_file:
-                    cls.save(processed, cls.output_file)
-                return processed
+                return fetch_from_loaded_input_file(content)
 
         def fetch_from_output_file():
             if cls.output_file and cls.output_file.exists():

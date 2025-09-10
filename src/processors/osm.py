@@ -24,9 +24,13 @@ class AbstractOSMProcessor(ProcessorMixin):
     input_dir = DATA_FOLDER / "OSM"
     output_dir = input_dir
 
-    # API declaration
-    api_class = True
+    # API declaration and technical limitations
+    is_api = True
     API_URL = "https://overpass-api.de/api/interpreter"
+    api_timeout = 600  # seconds
+
+    # Geographical delimitation
+    area = "Isère"
 
     @classmethod
     def query_overpass(cls, query: str, timeout: int) -> dict:
@@ -67,14 +71,13 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
-        # TODO Set timeout and department in variables
-        query = """
-        [out:json][timeout:600];
-        area["name"="Isère"]["boundary"="administrative"]->.searchArea;
+        query = f"""
+        [out:json][timeout:{cls.api_timeout}];
+        area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
         node["highway"="bus_stop"](area.searchArea);
         out geom;
         """
-        return cls.query_overpass(query, 600)
+        return cls.query_overpass(query, cls.api_timeout)
 
     @classmethod
     def pre_process(cls, content, **kwargs) -> dict:
@@ -109,24 +112,28 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
-        # TODO Set timeout and department in variables
-        query = """
-        [out:json][timeout:600];
-        area["name"="Isère"]["boundary"="administrative"]->.searchArea;
+        query = f"""
+        [out:json][timeout:{cls.api_timeout}];
+        area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
         relation["type"="route"]["route"="bus"](area.searchArea);
         out;
         """
-        return cls.query_overpass(query, 600)
+        return cls.query_overpass(query, cls.api_timeout)
 
     @classmethod
     def pre_process(cls, content, **kwargs) -> list[dict]:
         res = []
         for element in content["elements"]:
             if element["type"] == "relation":
-                relation = {"id": element["id"], "tags": element["tags"], "stops": []}
-                for member in element["members"]:
-                    if member["role"] == "stop":
-                        relation["stops"].append(member["ref"])
+                relation = {
+                    "id": element["id"],
+                    "tags": element["tags"],
+                    "stops": list(
+                        member["ref"]
+                        for member in element["members"]
+                        if member["role"] == "stop"
+                    ),
+                }
                 res.append(relation)
         return res
 
