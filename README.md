@@ -80,8 +80,16 @@ pre-commit install
 
 ## Jouer avec Jupyter Lab
 
+macOS and Linux:
+
 ```sh
 .venv/bin/jupyter lab
+```
+
+windows:
+
+```sh
+.venv\Scripts\jupyter lab
 ```
 
 ## Scrapping
