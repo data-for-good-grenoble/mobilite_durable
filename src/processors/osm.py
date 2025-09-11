@@ -25,7 +25,7 @@ class AbstractOSMProcessor(ProcessorMixin):
     output_dir = input_dir
 
     # API declaration and technical limitations
-    is_api = True
+    api_class = True  # TODO Export API into OverpassAPI class
     API_URL = "https://overpass-api.de/api/interpreter"
     api_timeout = 600  # seconds
 
