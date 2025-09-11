@@ -262,9 +262,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
         if cls.output_file and (reload_pipeline or not cls.output_file.exists()):
             # Preprocess and filter datasets
-            content = cls.fetch(reload_pipeline=reload_pipeline)
-            output_content = cls.pre_process(content)
-            cls.save(output_content, cls.output_file)
+            cls.fetch(reload_pipeline=reload_pipeline)
 
         # Use filtered_datasets.json to download the GTFS files
         if cls.output_file.exists():
