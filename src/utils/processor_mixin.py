@@ -61,7 +61,7 @@ class ProcessorMixin:
                 return cls.fetch_from_file(cls.output_file)
 
         methods = [fetch_from_api, fetch_from_input_file, fetch_from_output_file]
-        if reload_pipeline is True:
+        if not reload_pipeline:
             methods = methods[::-1]
 
         for method in methods:
