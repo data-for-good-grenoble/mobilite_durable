@@ -49,7 +49,7 @@ class ProcessorMixin:
             processed = cls.pre_process(content)
             if cls.output_file:
                 cls.save(processed, cls.output_file)
-            return content
+            return processed
 
         def fetch_from_input_file():
             if cls.input_file and cls.input_file.exists():
