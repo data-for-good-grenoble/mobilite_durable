@@ -86,23 +86,39 @@ class ProcessorMixin:
             content = cls.fetch_from_api()
 
         if save and cls.input_file:
-            cls.save(content, cls.input_file)
+            if content is None:
+                logger.error(f"{cls.__name__}: cannot save because `content` attribute is None")
+            else:
+                cls.input_file.parent.mkdir(parents=True, exist_ok=True)
+                cls.save(content, cls.input_file)
         return content
 
     @classmethod
     def fetch_and_save_from_input_file(cls, content=None, save: bool = True):
         if content is None and cls.input_file:
-            content = cls.fetch_from_file(cls.input_file)
+            if cls.input_file.exists():
+                content = cls.fetch_from_file(cls.input_file)
+            else:
+                logger.warning(f"{cls.__name__}: {cls.input_file} does not exist")
 
         processed = cls.pre_process(content)
         if save and cls.output_file:
-            cls.save(processed, cls.output_file)
+            if processed is None:
+                logger.error(
+                    f"{cls.__name__}: cannot save because `processed` attribute is None"
+                )
+            else:
+                cls.output_file.parent.mkdir(parents=True, exist_ok=True)
+                cls.save(processed, cls.output_file)
         return processed
 
     @classmethod
     def fetch_from_output_file(cls, content=None):
         if content is None and cls.output_file:
-            content = cls.fetch_from_file(cls.output_file)
+            if cls.output_file.exists():
+                content = cls.fetch_from_file(cls.output_file)
+            else:
+                logger.warning(f"{cls.__name__}: {cls.output_file} does not exist")
 
         return cls.post_process(content)
 
@@ -112,18 +128,11 @@ class ProcessorMixin:
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs):
-        if not path.exists():
-            logger.warning(f"{cls.__name__}: {path} does not exist")
-            return
-        # TODO: logic
+        raise NotImplementedError
 
     @classmethod
     def save(cls, content, path: Path) -> None:
-        if content is None:
-            logger.error(f"{cls.__name__}: cannot save because `content` attribute is None")
-            return
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # TODO: logic
+        raise NotImplementedError
 
     @classmethod
     def pre_process(cls, content, **kwargs):
