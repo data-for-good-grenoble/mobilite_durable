@@ -46,7 +46,7 @@ class ProcessorMixin:
         fetch_api_kwargs: dict | None = None,
         fetch_input_kwargs: dict | None = None,
         fetch_output_kwargs: dict | None = None,
-    ) -> Any:
+    ) -> Any | None:
         """
         Récupère la donnée et la sauvegarde si besoin
         Il existe 3 niveaux d'informations : celle de l'api, celle de l'input_file et celle de l'output_file
@@ -81,7 +81,9 @@ class ProcessorMixin:
         return output_content
 
     @classmethod
-    def fetch_and_save_from_api(cls, content=None, save: bool = True):
+    def fetch_and_save_from_api(
+        cls, content: Any | None = None, save: bool = True
+    ) -> Any | None:
         if content is None and cls.api_class:
             content = cls.fetch_from_api()
 
@@ -94,7 +96,9 @@ class ProcessorMixin:
         return content
 
     @classmethod
-    def fetch_and_save_from_input_file(cls, content=None, save: bool = True):
+    def fetch_and_save_from_input_file(
+        cls, content: Any | None = None, save: bool = True
+    ) -> Any | None:
         if content is None and cls.input_file:
             if cls.input_file.exists():
                 content = cls.fetch_from_file(cls.input_file)
@@ -113,7 +117,7 @@ class ProcessorMixin:
         return processed
 
     @classmethod
-    def fetch_from_output_file(cls, content=None):
+    def fetch_from_output_file(cls, content: Any | None = None) -> Any | None:
         if content is None and cls.output_file:
             if cls.output_file.exists():
                 content = cls.fetch_from_file(cls.output_file)
@@ -131,13 +135,13 @@ class ProcessorMixin:
         raise NotImplementedError
 
     @classmethod
-    def save(cls, content, path: Path) -> None:
+    def save(cls, content: Any, path: Path) -> None:
         raise NotImplementedError
 
     @classmethod
-    def pre_process(cls, content, **kwargs):
+    def pre_process(cls, content: Any | None, **kwargs) -> Any | None:
         return content
 
     @classmethod
-    def post_process(cls, content, **kwargs):
+    def post_process(cls, content: Any | None, **kwargs) -> Any | None:
         return content
