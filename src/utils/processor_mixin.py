@@ -25,14 +25,12 @@ class ProcessorMixin:
     def run(
         cls,
         reload_pipeline: bool = False,
-        content: Any = None,
         fetch_api_kwargs: dict | None = None,
         fetch_input_kwargs: dict | None = None,
         fetch_output_kwargs: dict | None = None,
     ) -> None:
         content = cls.fetch(
             reload_pipeline=reload_pipeline,
-            content=None,
             fetch_api_kwargs=fetch_api_kwargs,
             fetch_input_kwargs=fetch_input_kwargs,
             fetch_output_kwargs=fetch_output_kwargs,
@@ -44,7 +42,6 @@ class ProcessorMixin:
     def fetch(
         cls,
         reload_pipeline: bool = False,
-        content: Any = None,
         fetch_api_kwargs: dict | None = None,
         fetch_input_kwargs: dict | None = None,
         fetch_output_kwargs: dict | None = None,
@@ -63,7 +60,7 @@ class ProcessorMixin:
         fetch_output_kwargs = fetch_output_kwargs or dict()
 
         if reload_pipeline:
-            api_content = cls.fetch_and_save_from_api(content, **fetch_api_kwargs)
+            api_content = cls.fetch_and_save_from_api(**fetch_api_kwargs)
             input_content = cls.fetch_and_save_from_input_file(
                 api_content, **fetch_input_kwargs
             )
