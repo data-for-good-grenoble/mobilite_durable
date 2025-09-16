@@ -9,7 +9,8 @@ class ProcessorMixin:
     """
     api_class est la classe de l'API
     input_file va permettre de trouver le fichier d'entrée, sauvegarde non modifiée de l'api_class
-    output_file va permettre de trouver le fichier de sortie, sauvegarde modifiée de l'input_file
+    output_file va permettre de trouver le fichier de sortie, sauvegarde de l'input_file modifiée par `pre_process`
+    la data en sortie est le contenu de l'output_file sur lequel on a appliqué `post_process`
     """
 
     api_class: Type | None = None
@@ -50,8 +51,8 @@ class ProcessorMixin:
         Récupère la donnée et la sauvegarde si besoin
         Il existe 3 niveaux d'informations : celle de l'api, celle de l'input_file et celle de l'output_file
         Lors d'un process où `reload_pipeline` is False (cas par défaut) :
-            - on va regarder l'output_file, s'il n'existe pas ou s'il n'est pas configuré
-            - on va regarder l'input_file, que l'on va procésser, s'il n'existe pas ou s'il n'est pas configuré
+            - on va regarder l'output_file, sur lequel on va appliquer `postprocess`, s'il n'existe pas ou s'il n'est pas configuré
+            - on va regarder l'input_file, sur lequel on va appliquer `preprocess`, s'il n'existe pas ou s'il n'est pas configuré
             - on va regarder l'api_class, pour télécharger la donnée et la sauvegarder
         Lors d'un process où `reload_pipeline` is True, le process est inversé
         """
