@@ -45,21 +45,6 @@
     ]
   },
   {
-    "id": 2073673,
-    "tags": {
-      "disused:type": "route",
-      "name": "Tad 4",
-      "network": "TPR",
-      "note": "ancienne ligne, remplacée depuis par tad nord, centre et sud.",
-      "operator": "Courriers Rhodaniens / Fayard",
-      "public_transport:version": "1",
-      "ref": "4",
-      "route": "bus",
-      "type": "route"
-    },
-    "stops": []
-  },
-  {
     "id": 2569190,
     "tags": {
       "colour": "#ee0064",
@@ -381,7 +366,6 @@
       2352521656,
       2352521667,
       2352521619,
-      2352521530,
       13116069951,
       1692228968,
       254154193,
@@ -417,7 +401,7 @@
       932603548,
       2352521712,
       2352521549,
-      2352521543,
+      2352521535,
       2352521638,
       2352521613,
       2352521649,
@@ -429,7 +413,6 @@
       2343730383,
       4763750545,
       13116069950,
-      2352521523,
       1828046132,
       2352521665,
       2352521696,
@@ -22409,7 +22392,6 @@
       6138944434,
       6716481961,
       6716481962,
-      6109991842,
       2770600430,
       2617010908
     ]
@@ -39219,7 +39201,7 @@
     },
     "stops": [
       11002962655,
-      2352521543,
+      2352521535,
       11002954480,
       2354884411
     ]
@@ -62080,6 +62062,31 @@
       4646157107,
       4611064976,
       2772342701
+    ]
+  },
+  {
+    "id": 19600202,
+    "tags": {
+      "check_date": "2025-09-14",
+      "from": "Madrid, Estación Sur de Autobuses",
+      "name": "BlaBlaCar: Madrid, Estación Sur de Autobuses → Lyon, Perrache",
+      "name:de": "BlaBlaCar: Madrid, Busbahnhof Süd → Lyon, Perrache",
+      "name:es": "BlaBlaCar: Madrid, Estación Sur de Autobuses → Lyon, Perrache",
+      "name:eu": "BlaBlaCar: Madril, Hegoaldeko autobus geltokia → Lyon, Perrache",
+      "name:fr": "BlaBlaCar: Madrid, Gare Routière Sud → Lyon, Perrache",
+      "network": "BlaBlaCar",
+      "operator": "BlaBlaCar",
+      "public_transport:version": "2",
+      "route": "bus",
+      "to": "Lyon, Perrache",
+      "type": "route"
+    },
+    "stops": [
+      7390900350,
+      4497580390,
+      6312690382,
+      2380205864,
+      16050236
     ]
   }
 ]
