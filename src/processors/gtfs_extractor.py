@@ -49,8 +49,8 @@ from shapely.geometry import LineString, MultiLineString, Point
 from src.settings import DATA_FOLDER, EPSG_WEB_MERCATOR, EPSG_WGS84
 from src.utils.logger import setup_logger
 
-# Force to DEBUG
-logger = setup_logger(level=logging.DEBUG)
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 class GTFSRouteType(IntEnum):
@@ -1153,4 +1153,5 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
+    logger = setup_logger(level=logging.DEBUG)
     main()

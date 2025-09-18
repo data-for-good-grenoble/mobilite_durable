@@ -25,8 +25,13 @@ def setup_logger(
     name: str = "main",
 ):
     """Configuration globale du logger"""
-    logger = logging.getLogger(name)
+    # Use root logger if no specified name
+    logger = logging.getLogger() if name == "main" else logging.getLogger(name)
     logger.setLevel(level)
+
+    # Avoid handler duplication
+    if logger.hasHandlers():
+        return logger
 
     # logger console
     log_console = logging.StreamHandler()

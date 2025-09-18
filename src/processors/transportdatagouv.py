@@ -320,7 +320,5 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    # Set up logger
-    setup_logger(level=logging.DEBUG)
-
+    logger = setup_logger(level=logging.DEBUG)
     main()

@@ -44,6 +44,7 @@ class AbstractOSMProcessor(ProcessorMixin):
         Returns:
             JSON response from the API
         """
+        start = datetime.now()
         response = requests.post(
             cls.API_URL,
             data={"data": query},
@@ -51,6 +52,9 @@ class AbstractOSMProcessor(ProcessorMixin):
             timeout=timeout,
         )
         response.raise_for_status()
+        end = datetime.now()
+        elapsed = end - start
+        logger.info(f"Getting overpass query results in {elapsed.seconds}s")
         return response.json()
 
     @classmethod
@@ -145,7 +149,5 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    # Set up logger
-    setup_logger(level=logging.DEBUG)
-
+    logger = setup_logger(level=logging.DEBUG)
     main()
