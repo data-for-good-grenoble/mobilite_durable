@@ -24,7 +24,7 @@ from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
 
 # Set up logger
-logger = logging.getLogger(__name__)
+logger = setup_logger(level=logging.DEBUG, name=__name__)
 
 
 class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
@@ -320,7 +320,4 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    # Set up logger
-    setup_logger(level=logging.DEBUG)
-
     main()

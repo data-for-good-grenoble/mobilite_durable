@@ -16,7 +16,7 @@ from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
 
 # Set up logger
-logger = logging.getLogger(__name__)
+logger = setup_logger(level=logging.DEBUG, name=__name__)
 
 
 class AbstractOSMProcessor(ProcessorMixin):
@@ -44,6 +44,7 @@ class AbstractOSMProcessor(ProcessorMixin):
         Returns:
             JSON response from the API
         """
+        start = datetime.now()
         response = requests.post(
             cls.API_URL,
             data={"data": query},
@@ -51,6 +52,9 @@ class AbstractOSMProcessor(ProcessorMixin):
             timeout=timeout,
         )
         response.raise_for_status()
+        end = datetime.now()
+        elapsed = end - start
+        logger.info(f"Getting overpass query results in {elapsed.seconds}s")
         return response.json()
 
     @classmethod
@@ -83,6 +87,11 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
     def pre_process(cls, content, **kwargs) -> dict:
         features = []
         for element in content.get("elements", []):
+            id = element.get("id")
+            tags = element.get("tags", {})
+            if "disused" in tags or "disused:public_transport" in tags or "abandoned" in tags:
+                logger.debug(f"Skipping disused or abandoned bus stop with id {id}")
+                continue
             feature = {
                 "type": "Feature",
                 "geometry": {
@@ -90,7 +99,7 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
                     "coordinates": [element["lon"], element["lat"]],
                 },
                 "properties": element.get("tags", {}),
-                "id": element.get("id"),
+                "id": id,
             }
             features.append(feature)
         return {
@@ -125,9 +134,14 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
         res = []
         for element in content["elements"]:
             if element["type"] == "relation":
+                id = element["id"]
+                tags = element["tags"]
+                if "disused" in tags or "disused:type" in tags or "abandoned" in tags:
+                    logger.debug(f"Skipping disused or abandoned bus line with id {id}")
+                    continue
                 relation = {
-                    "id": element["id"],
-                    "tags": element["tags"],
+                    "id": id,
+                    "tags": tags,
                     "stops": list(
                         member["ref"]
                         for member in element["members"]
@@ -139,13 +153,10 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 
 
 def main(**kwargs):
-    reload_pipeline = False
+    reload_pipeline = True
     OSMBusStopsProcessor.run(reload_pipeline)
     OSMBusLinesProcessor.run(reload_pipeline)
 
 
 if __name__ == "__main__":
-    # Set up logger
-    setup_logger(level=logging.DEBUG)
-
     main()

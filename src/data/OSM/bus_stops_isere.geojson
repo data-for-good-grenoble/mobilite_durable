@@ -2,7 +2,7 @@
   "type": "FeatureCollection",
   "generator": "Overpass API 0.7.62.8 e802775f",
   "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-  "timestamp": "2025-09-09T21:05:05Z",
+  "timestamp": "2025-09-18T17:25:40Z",
   "features": [
     {
       "type": "Feature",
@@ -97,26 +97,6 @@
         "public_transport": "stop_position"
       },
       "id": 137073
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6965265,
-          45.1611879
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Seyssins - Rondeau",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 137374
     },
     {
       "type": "Feature",
@@ -471,25 +451,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7492829,
-          45.1988074
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Grand Sablon",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 658008
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6388133,
           45.1716232
         ]
@@ -745,8 +706,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.721589,
-          45.1600237
+          5.721532,
+          45.1600454
         ]
       },
       "properties": {
@@ -1529,26 +1490,6 @@
         "public_transport": "stop_position"
       },
       "id": 21268015
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.5679727,
-          45.3275915
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rue de la République",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 21663123
     },
     {
       "type": "Feature",
@@ -2698,26 +2639,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.8494705,
-          45.2075466
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Les Arnauds",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 30623059
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.8208769,
           45.2402974
         ]
@@ -3667,26 +3588,6 @@
         "wheelchair": "yes"
       },
       "id": 59412859
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.8492011,
-          45.2075468
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Les Arnauds",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 59412893
     },
     {
       "type": "Feature",
@@ -9768,26 +9669,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.571366,
-          45.3454199
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "La Patinière",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 352898319
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.5800748,
           45.3407863
         ]
@@ -12678,26 +12559,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7678385,
-          45.1677601
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Fernand Léger",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 451237907
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7653012,
           45.1649175
         ]
@@ -12736,26 +12597,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7633943,
-          45.1629242
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Le Carina",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 451237911
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7635448,
           45.1626875
         ]
@@ -12768,26 +12609,6 @@
         "public_transport": "stop_position"
       },
       "id": 451237913
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7645953,
-          45.1661419
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "network": "M réso",
-        "old_name": "Maisons Blanches",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 451237917
     },
     {
       "type": "Feature",
@@ -13265,28 +13086,6 @@
         "public_transport": "stop_position"
       },
       "id": 457759133
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6801617,
-          45.2077133
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "mapillary": "298419338459596",
-        "name": "Maladière",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-15",
-        "wheelchair": "yes"
-      },
-      "id": 457759134
     },
     {
       "type": "Feature",
@@ -15650,26 +15449,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6800221,
-          45.2077496
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Maladière",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 473975686
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6838082,
           45.2049736
         ]
@@ -15747,129 +15526,6 @@
         "wheelchair": "yes"
       },
       "id": 473975709
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6888391,
-          45.1978728
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Jules Guesde",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 473975711
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6886507,
-          45.1978988
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Jules Guesde",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 473975714
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6852478,
-          45.1970829
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Les Écrins",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 473975765
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6844106,
-          45.1972194
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Les Écrins",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 473975771
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.682799,
-          45.1950034
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Edmond Vigne",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 473975785
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6802446,
-          45.1939192
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "description": "Arrêt \"Relais Tram\"",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "mapillary": "Q06-fIGtxi6yagl4gvQqyA",
-        "name": "Charles Michels",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-15",
-        "wheelchair": "yes"
-      },
-      "id": 473975790
     },
     {
       "type": "Feature",
@@ -16286,26 +15942,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6593919,
-          45.258207
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Croix de la Rochette",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 474770789
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6615984,
           45.2547886
         ]
@@ -16583,82 +16219,6 @@
         "wheelchair": "yes"
       },
       "id": 474827245
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6805801,
-          45.2381529
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Barnave",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 474827246
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6807936,
-          45.23798
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Barnave",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 474827247
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6782222,
-          45.2401363
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Europe",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 474827248
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6777844,
-          45.2406558
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Europe",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 474827249
     },
     {
       "type": "Feature",
@@ -18056,26 +17616,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.765764,
-          45.2119403
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Revirée - Sayettes",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 480458800
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7663504,
           45.2120756
         ]
@@ -19453,26 +18993,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7234774,
-          45.1594425
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Maison des Anciens",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 488881141
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7376869,
           45.1594367
         ]
@@ -19488,46 +19008,6 @@
         "wheelchair": "yes"
       },
       "id": 488881143
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7385737,
-          45.1617318
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Place des Géants",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 488881161
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7385243,
-          45.1617641
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Place des Géants",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 488881162
     },
     {
       "type": "Feature",
@@ -20487,46 +19967,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6960733,
-          45.1970236
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Place du Néron",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601094
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6925393,
-          45.1966749
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Romain Rolland",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601099
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6906263,
           45.1958646
         ]
@@ -20540,66 +19980,6 @@
         "wheelchair": "yes"
       },
       "id": 496601106
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6872434,
-          45.1945026
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Mail Cachin",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601112
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.687264,
-          45.1942327
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Mail Cachin",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601116
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6924706,
-          45.1923617
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rue de la Paix",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601128
     },
     {
       "type": "Feature",
@@ -20910,46 +20290,6 @@
         "wheelchair": "yes"
       },
       "id": 496601214
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.728654,
-          45.1634972
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Reynoard",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601216
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7287612,
-          45.1641691
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Reynoard",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 496601219
     },
     {
       "type": "Feature",
@@ -22427,46 +21767,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7639325,
-          45.1795757
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Pierre Courtade",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 504708702
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7636449,
-          45.1795041
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Pierre Courtade",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 504708704
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7623304,
           45.1782834
         ]
@@ -23793,26 +23093,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7568611,
-          45.1710515
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "8 Mai 1945",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 515302521
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7541915,
           45.1675557
         ]
@@ -23969,45 +23249,6 @@
         "wheelchair": "yes"
       },
       "id": 515302557
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6965095,
-          45.161031
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Seyssins - Rondeau",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 515302578
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6947276,
-          45.1669767
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Mas des Îles",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 515302589
     },
     {
       "type": "Feature",
@@ -27009,8 +26250,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5763437,
-          45.3726147
+          5.5764188,
+          45.37261
         ]
       },
       "properties": {
@@ -31122,6 +30363,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "highway": "bus_stop",
         "public_transport": "platform",
         "shelter": "yes",
@@ -33528,25 +32770,6 @@
         "wheelchair": "yes"
       },
       "id": 1438769453
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.892697,
-          45.2697899
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rafour Croizat",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 1439324001
     },
     {
       "type": "Feature",
@@ -38393,44 +37616,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6742928,
-          45.0951848
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Cité Scolaire",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 1800608920
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6744495,
-          45.0949599
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Cité Scolaire",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 1800608930
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6755677,
           45.0896025
         ]
@@ -38539,29 +37724,6 @@
         "wheelchair": "yes"
       },
       "id": 1800880359
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7231475,
-          45.1883864
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "mapillary": "2053918184751270",
-        "name": "Gambetta",
-        "network": "M réso",
-        "network:wikidata": "Q131689044",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-17",
-        "wheelchair": "no"
-      },
-      "id": 1800903104
     },
     {
       "type": "Feature",
@@ -39483,84 +38645,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6595755,
-          45.2584741
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Croix de la Rochette",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1804374990
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6574094,
-          45.2474645
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Usine L",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 1804374994
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6593357,
-          45.2581253
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Croix de la Rochette",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1804374995
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6651374,
-          45.2401723
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Cap 38",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 1804374997
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6594596,
           45.2582359
         ]
@@ -39720,25 +38804,6 @@
         "public_transport": "stop_position"
       },
       "id": 1805431148
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6776536,
-          45.0548176
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rue de l'Espère",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 1805431149
     },
     {
       "type": "Feature",
@@ -40033,26 +39098,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6425054,
-          45.2874695
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Le Péage",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1805784357
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6562698,
           45.2637185
         ]
@@ -40195,26 +39240,6 @@
         "public_transport": "stop_position"
       },
       "id": 1805789708
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6422344,
-          45.2879376
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Le Péage",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1805789709
     },
     {
       "type": "Feature",
@@ -42801,8 +41826,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6032693,
-          45.3617423
+          5.6032653,
+          45.3617508
         ]
       },
       "properties": {
@@ -44360,29 +43385,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6800902,
-          45.1939703
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "description": "Arrêt \"Relais Tram\"",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "mapillary": "1rbRXGYCvxI6I0SjSvd-ww",
-        "name": "Charles Michels",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-15",
-        "wheelchair": "yes"
-      },
-      "id": 1898024812
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6880788,
           45.1921768
         ]
@@ -44397,26 +43399,6 @@
         "wheelchair": "yes"
       },
       "id": 1898053032
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6875912,
-          45.1923912
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Fontaine - Hôtel de Ville - La Source",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1898053074
     },
     {
       "type": "Feature",
@@ -44695,52 +43677,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7321625,
-          45.1592521
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "covered": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "level": "0",
-        "name": "Grand'Place",
-        "network": "M réso",
-        "network:wikidata": "Q131689044",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1905961759
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7323056,
-          45.158883
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "covered": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "level": "0",
-        "name": "Grand'Place",
-        "network": "M réso",
-        "network:wikidata": "Q131689044",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1905961760
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.5678113,
           45.4793889
         ]
@@ -44945,27 +43881,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7191941,
-          45.1532128
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "level": "0",
-        "name": "Échirolles - Gare",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1914312581
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7192603,
           45.1496318
         ]
@@ -45036,46 +43951,6 @@
         "wheelchair": "yes"
       },
       "id": 1916856161
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7164856,
-          45.1426692
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Auguste Delaune",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1916864143
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7161013,
-          45.1427525
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Auguste Delaune",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 1916864146
     },
     {
       "type": "Feature",
@@ -45339,30 +44214,6 @@
         "wheelchair": "no"
       },
       "id": 1920479869
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7361939,
-          45.1967778
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "description": "Arrêt Scolaire",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "mapillary": "472921550643693",
-        "name": "Île Verte",
-        "network": "M réso",
-        "pole": "yes",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-17",
-        "wheelchair": "limited"
-      },
-      "id": 1920479916
     },
     {
       "type": "Feature",
@@ -48064,26 +46915,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5645054,
-          45.3268139
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Place Gauthier",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 2153407126
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.4718513,
           45.3412835
         ]
@@ -50458,25 +49289,6 @@
         "wheelchair": "yes"
       },
       "id": 2247019805
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.8485626,
-          45.2449844
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Transformateur",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 2247019806
     },
     {
       "type": "Feature",
@@ -53502,25 +52314,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5986793,
-          45.3616901
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "description": "Arrêt encore desservi par des lignes scolaires.",
-        "highway": "bus_stop",
-        "name": "Ferdinand Buisson - Chartreuse",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 2272816274
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6353247,
           45.2930156
         ]
@@ -55187,8 +53980,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5860521,
-          45.371759
+          5.5860501,
+          45.3717515
         ]
       },
       "properties": {
@@ -55197,7 +53990,7 @@
         "name": "Belvédère I",
         "network": "M réso",
         "public_transport": "stop_position",
-        "wheelchair": "no"
+        "wheelchair": "yes"
       },
       "id": 2351484618
     },
@@ -55206,8 +53999,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5862746,
-          45.3717028
+          5.5862619,
+          45.3717245
         ]
       },
       "properties": {
@@ -55216,7 +54009,7 @@
         "name": "Belvédère I",
         "network": "M réso",
         "public_transport": "stop_position",
-        "wheelchair": "no"
+        "wheelchair": "yes"
       },
       "id": 2351484619
     },
@@ -55359,8 +54152,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5852641,
-          45.3736676
+          5.5852272,
+          45.3736728
         ]
       },
       "properties": {
@@ -55391,26 +54184,6 @@
         "wheelchair": "yes"
       },
       "id": 2351484629
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.5783982,
-          45.3828466
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Louis Neel",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 2351484630
     },
     {
       "type": "Feature",
@@ -55455,8 +54228,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5867724,
-          45.3497761
+          5.5868703,
+          45.3498628
         ]
       },
       "properties": {
@@ -55689,7 +54462,7 @@
       },
       "properties": {
         "bus": "yes",
-        "disused": "yes",
+        "description": "Arrêt de régulation non commercial",
         "highway": "bus_stop",
         "name": "Rue des Tisseuses",
         "network": "M réso",
@@ -55741,8 +54514,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.5812887,
-          45.3622055
+          5.5812776,
+          45.362054
         ]
       },
       "properties": {
@@ -55754,25 +54527,6 @@
         "wheelchair": "yes"
       },
       "id": 2352521535
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.5812709,
-          45.3620587
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "highway": "bus_stop",
-        "name": "Brunetière",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 2352521543
     },
     {
       "type": "Feature",
@@ -56026,8 +54780,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6029933,
-          45.3617313
+          5.6029926,
+          45.3617365
         ]
       },
       "properties": {
@@ -56073,7 +54827,7 @@
       "properties": {
         "bus": "yes",
         "highway": "bus_stop",
-        "name": "Coublevie - Hôpital",
+        "name": "Coublevie EHPAD",
         "network": "M réso",
         "public_transport": "stop_position",
         "wheelchair": "yes"
@@ -56334,14 +55088,14 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6051467,
-          45.3516956
+          5.605146,
+          45.3516923
         ]
       },
       "properties": {
         "bus": "yes",
         "highway": "bus_stop",
-        "name": "École primaire du Bérard",
+        "name": "École du Bérard",
         "network": "M réso",
         "public_transport": "stop_position",
         "wheelchair": "no"
@@ -56360,7 +55114,7 @@
       "properties": {
         "bus": "yes",
         "highway": "bus_stop",
-        "name": "École primaire du Bérard",
+        "name": "École du Bérard",
         "network": "M réso",
         "public_transport": "stop_position",
         "wheelchair": "yes"
@@ -59381,25 +58135,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.8481037,
-          45.2506647
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Le Piat",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 2469910325
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.8510281,
           45.2487277
         ]
@@ -59448,46 +58183,6 @@
         "public_transport": "stop_position"
       },
       "id": 2478884721
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6979696,
-          45.1255629
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Marceline",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 2478942472
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6982638,
-          45.1260884
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Marceline",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 2478950625
     },
     {
       "type": "Feature",
@@ -60426,8 +59121,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.9032495,
-          45.0917787
+          5.9032475,
+          45.0917744
         ]
       },
       "properties": {
@@ -67944,25 +66639,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7681662,
-          45.1682856
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Fernand Léger",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 2972858752
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7604759,
           45.1822385
         ]
@@ -68376,28 +67052,6 @@
         "wheelchair": "yes"
       },
       "id": 2986748649
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7229228,
-          45.1887025
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "mapillary": "3976285759130858",
-        "name": "Gambetta",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-17",
-        "wheelchair": "no"
-      },
-      "id": 2986748650
     },
     {
       "type": "Feature",
@@ -69180,26 +67834,6 @@
         "public_transport": "stop_position"
       },
       "id": 3045766258
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6718233,
-          45.1973608
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "La Poya",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 3050627337
     },
     {
       "type": "Feature",
@@ -74701,26 +73335,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7290215,
-          45.1526379
-        ]
-      },
-      "properties": {
-        "abandoned": "yes",
-        "bus": "yes",
-        "highway": "bus_stop",
-        "name": "Rue de Lorraine",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 3633364251
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7280525,
           45.1574329
         ]
@@ -77783,25 +76397,6 @@
         "shelter": "yes"
       },
       "id": 4653973549
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6652114,
-          45.2402499
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Cap 38",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 4654244327
     },
     {
       "type": "Feature",
@@ -82555,8 +81150,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.621272,
-          44.8710242
+          5.6212083,
+          44.8709795
         ]
       },
       "properties": {
@@ -84206,26 +82801,6 @@
         "public_transport": "stop_position"
       },
       "id": 6003239015
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7917674,
-          45.2107523
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Les Béalières",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 6006026836
     },
     {
       "type": "Feature",
@@ -88876,26 +87451,6 @@
         "public_transport": "stop_position"
       },
       "id": 6630873263
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.4911384,
-          45.3012797
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Tullins - Gare SNCF",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 6640387278
     },
     {
       "type": "Feature",
@@ -94209,6 +92764,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "highway": "bus_stop",
         "public_transport": "platform"
       },
@@ -94224,6 +92780,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "highway": "bus_stop",
         "public_transport": "platform"
       },
@@ -95912,6 +94469,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "highway": "bus_stop",
         "public_transport": "platform"
       },
@@ -95927,6 +94485,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "highway": "bus_stop",
         "public_transport": "platform"
       },
@@ -96607,24 +95166,6 @@
         "public_transport": "stop_position"
       },
       "id": 7638567357
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6936498,
-          45.1800059
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused:public_transport": "stop_position",
-        "highway": "bus_stop",
-        "name": "Edmond Aguiard",
-        "network": "M réso"
-      },
-      "id": 7638567358
     },
     {
       "type": "Feature",
@@ -101871,6 +100412,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:15945",
         "highway": "bus_stop",
         "name": "La Martinière",
@@ -101888,6 +100430,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:15944",
         "highway": "bus_stop",
         "name": "La Martinière",
@@ -102143,6 +100686,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:20663",
         "highway": "bus_stop",
         "name": "Chamboud Roussel",
@@ -102160,6 +100704,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:20662",
         "highway": "bus_stop",
         "name": "Chamboud Roussel",
@@ -102177,6 +100722,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:16505",
         "highway": "bus_stop",
         "name": "Chamboud D538",
@@ -102195,6 +100741,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:16504",
         "highway": "bus_stop",
         "name": "Chamboud D538",
@@ -102249,6 +100796,7 @@
       "properties": {
         "bench": "no",
         "bin": "no",
+        "bus": "yes",
         "gtfs_id": "CG38:16513",
         "highway": "bus_stop",
         "lit": "no",
@@ -102271,6 +100819,7 @@
       "properties": {
         "bench": "no",
         "bin": "no",
+        "bus": "yes",
         "gtfs_id": "CG38:16512",
         "highway": "bus_stop",
         "lit": "no",
@@ -102359,6 +100908,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:15946",
         "highway": "bus_stop",
         "name": "Chez Pistolet",
@@ -102376,6 +100926,7 @@
         ]
       },
       "properties": {
+        "bus": "yes",
         "gtfs_id": "CG38:15947",
         "highway": "bus_stop",
         "name": "Chez Pistolet",
@@ -108839,26 +107390,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7058533,
-          45.1886578
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Berriat - Le Magasin",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 9905291908
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7142847,
           45.189057
         ]
@@ -108929,26 +107460,6 @@
         "public_transport": "stop_position"
       },
       "id": 9905315815
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6825059,
-          45.195418
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Edmond Vigne",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 9905343426
     },
     {
       "type": "Feature",
@@ -110247,26 +108758,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7272659,
-          45.1706483
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Flaubert - Clos d'Or",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 10562729551
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.8752863,
           45.1256708
         ]
@@ -110279,26 +108770,6 @@
         "public_transport": "stop_position"
       },
       "id": 10579757191
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.8841175,
-          45.2667904
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "ST-Microelectronics",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 10584358945
     },
     {
       "type": "Feature",
@@ -110354,6 +108825,24 @@
         "public_transport": "platform"
       },
       "id": 10586385099
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.5988773,
+          45.3498573
+        ]
+      },
+      "properties": {
+        "bus": "yes",
+        "description": "Arrêt de régulation non commercial",
+        "highway": "bus_stop",
+        "name": "ZA du Roulet",
+        "public_transport": "stop_position"
+      },
+      "id": 10614451827
     },
     {
       "type": "Feature",
@@ -116232,24 +114721,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7135263,
-          45.1950469
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Émile Gueymard",
-        "public_transport": "stop_position"
-      },
-      "id": 12083193859
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6993626,
           45.1297518
         ]
@@ -116282,44 +114753,6 @@
         "wheelchair": "yes"
       },
       "id": 12083290652
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7089896,
-          45.1578595
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Viscose",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 12083447611
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7058972,
-          45.1487492
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Vaillant Couturier",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 12083447614
     },
     {
       "type": "Feature",
@@ -116623,26 +115056,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.8072092,
-          45.1873307
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Le Japin",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 12106690932
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7116414,
           45.149591
         ]
@@ -116794,25 +115207,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6803863,
-          45.1514458
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Pré Nouvel",
-        "network": "M réso",
-        "public_transport": "stop_position"
-      },
-      "id": 12124417582
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.6278057,
           45.2565579
         ]
@@ -116900,42 +115294,6 @@
         "public_transport": "stop_position"
       },
       "id": 12128302460
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6790497,
-          45.2431716
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rocher d'Escalade",
-        "public_transport": "stop_position"
-      },
-      "id": 12128302463
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.6789649,
-          45.2431745
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rocher d'Escalade",
-        "public_transport": "stop_position"
-      },
-      "id": 12128313962
     },
     {
       "type": "Feature",
@@ -119150,31 +117508,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.7318552,
-          45.1588764
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "covered": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "level": "0",
-        "mapillary": "959798918185829",
-        "name": "Grand'Place",
-        "network": "M réso",
-        "network:wikidata": "Q131689044",
-        "public_transport": "stop_position",
-        "survey:date": "2018-08-16",
-        "wheelchair": "yes"
-      },
-      "id": 12388753049
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.7510424,
           45.1156741
         ]
@@ -119916,26 +118249,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          5.6044755,
-          45.3184092
-        ]
-      },
-      "properties": {
-        "bus": "yes",
-        "disused": "yes",
-        "highway": "bus_stop",
-        "name": "Rossignol",
-        "network": "M réso",
-        "public_transport": "stop_position",
-        "wheelchair": "yes"
-      },
-      "id": 12449734119
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           5.350395,
           45.1613132
         ]
@@ -120054,6 +118367,7 @@
         "highway": "bus_stop",
         "name": "Cizieres Bas",
         "network": "Cars Région Isère",
+        "network:wikidata": "Q3456857",
         "public_transport": "stop_position"
       },
       "id": 12463363492
@@ -126030,6 +124344,7 @@
       },
       "properties": {
         "bus": "yes",
+        "description": "Arrêt de régulation non commercial",
         "highway": "bus_stop",
         "name": "Hôpital",
         "network": "M réso",
@@ -126325,6 +124640,41 @@
         "public_transport": "platform"
       },
       "id": 13125388923
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.5807832,
+          45.3757969
+        ]
+      },
+      "properties": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Vouise",
+        "public_transport": "stop_position"
+      },
+      "id": 13137738556
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.5837202,
+          45.3379457
+        ]
+      },
+      "properties": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Gymnase de la Grande Sure",
+        "network": "M réso",
+        "public_transport": "stop_position"
+      },
+      "id": 13137744654
     }
   ]
 }
