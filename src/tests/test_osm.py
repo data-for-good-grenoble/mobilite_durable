@@ -1,7 +1,9 @@
+import geopandas as gpd
 import pandas as pd
 import pytest
+from shapely.geometry import Point
 
-from src.processors.osm import OSMBusLinesProcessor
+from src.processors.osm import OSMBusLinesProcessor, OSMBusStopsProcessor
 
 
 class TestOSMBusLinesProcessorPreProcess:
@@ -215,4 +217,136 @@ class TestOSMBusLinesProcessorPreProcess:
             ]
         )
         result = OSMBusLinesProcessor.pre_process(input_content)
+        pd.testing.assert_frame_equal(result, expected)
+
+
+class TestOSMBusStopsProcessorPreProcess:
+    """Test de pre_process method of OSMBusStopsProcessor.
+
+    Author: Nicolas Grosjean
+    """
+
+    def test_pre_process_ko_bad_type(self, caplog: pytest.LogCaptureFixture):
+        pass
+
+    def test_pre_process_no_elements(self):
+        input_content = {"elements": []}
+        expected = gpd.GeoDataFrame(
+            columns=[
+                "gtfs_id",
+                "navitia_id",
+                "osm_id",
+                "name",
+                "description",
+                "line_gtfs_ids",
+                "line_osm_ids",
+                "geometry",
+                "other",
+            ],
+            geometry="geometry",
+        )
+        result = OSMBusStopsProcessor.pre_process(input_content)
+        pd.testing.assert_frame_equal(result, expected)
+
+    def test_pre_process_ok_one_element(self):
+        input_content = {
+            "elements": [
+                {
+                    "type": "node",
+                    "id": 1,
+                    "lon": "2.3522",
+                    "lat": "48.8566",
+                    "tags": {
+                        "gtfs_id": "STOP123",
+                        "name": "Test Stop A",
+                        "description": "Test description",
+                    },
+                }
+            ]
+        }
+        expected = gpd.GeoDataFrame(
+            [
+                {
+                    "gtfs_id": "STOP123",
+                    "navitia_id": None,
+                    "osm_id": 1,
+                    "name": "Test Stop A",
+                    "description": "Test description",
+                    "line_gtfs_ids": [],
+                    "line_osm_ids": [],
+                    "geometry": Point(2.3522, 48.8566),
+                    "other": {},
+                }
+            ],
+            geometry="geometry",
+        )
+        result = OSMBusStopsProcessor.pre_process(input_content)
+        pd.testing.assert_frame_equal(result, expected)
+
+    def test_pre_process_ok_multiple_elements(self):
+        input_content = {
+            "elements": [
+                {
+                    "type": "node",
+                    "id": 1,
+                    "lon": "2.3522",
+                    "lat": "48.8566",
+                    "tags": {
+                        "gtfs_id": "STOP123",
+                        "name": "Test Stop A",
+                        "description": "Test description A",
+                    },
+                },
+                {
+                    "type": "node",
+                    "id": 2,
+                    "lon": "2.295",
+                    "lat": "48.8738",
+                    "tags": {
+                        "name": "Test Stop B",
+                        "description": "Test description B",
+                        "disused": "yes",
+                    },
+                },
+                {
+                    "type": "node",
+                    "id": 3,
+                    "lon": "2.3333",
+                    "lat": "48.8600",
+                    "tags": {
+                        "gtfs_id": "STOP456",
+                        "name": "Test Stop C",
+                        # No description
+                    },
+                },
+            ]
+        }
+        expected = gpd.GeoDataFrame(
+            [
+                {
+                    "gtfs_id": "STOP123",
+                    "navitia_id": None,
+                    "osm_id": 1,
+                    "name": "Test Stop A",
+                    "description": "Test description A",
+                    "line_gtfs_ids": [],
+                    "line_osm_ids": [],
+                    "geometry": Point(2.3522, 48.8566),
+                    "other": {},
+                },
+                {
+                    "gtfs_id": "STOP456",
+                    "navitia_id": None,
+                    "osm_id": 3,
+                    "name": "Test Stop C",
+                    "description": None,
+                    "line_gtfs_ids": [],
+                    "line_osm_ids": [],
+                    "geometry": Point(2.3333, 48.8600),
+                    "other": {},
+                },
+            ],
+            geometry="geometry",
+        )
+        result = OSMBusStopsProcessor.pre_process(input_content)
         pd.testing.assert_frame_equal(result, expected)

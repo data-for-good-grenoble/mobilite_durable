@@ -6,14 +6,17 @@ Author: Nicolas Grosjean
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
+import geopandas as gpd
 import pandas as pd
 import requests
 from pydantic import ValidationError
+from shapely.geometry import Point
 
 from src.models.bus_line import BusLine
+from src.models.bus_stop import BusStop
 from src.settings import DATA_FOLDER
 from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
@@ -61,7 +64,7 @@ class AbstractOSMProcessor(ProcessorMixin):
         return response.json()
 
     @classmethod
-    def fetch_from_file(cls, path: Path, **kwargs):
+    def fetch_from_file(cls, path: Path, **kwargs) -> dict | pd.DataFrame:
         if path.suffix in [".json", ".geojson"]:
             with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -84,7 +87,7 @@ class AbstractOSMProcessor(ProcessorMixin):
 
 class OSMBusStopsProcessor(AbstractOSMProcessor):
     input_file = AbstractOSMProcessor.input_dir / "raw_bus_stops_isere.geojson"
-    output_file = AbstractOSMProcessor.output_dir / "bus_stops_isere.geojson"
+    output_file = AbstractOSMProcessor.output_dir / "bus_stops_isere.parquet"
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
@@ -97,35 +100,55 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
         return cls.query_overpass(query, cls.api_timeout)
 
     @classmethod
-    def pre_process(cls, content, **kwargs) -> dict:
-        features = []
+    def pre_process(cls, content: dict, **kwargs) -> gpd.GeoDataFrame:
+        stops = []
         for element in content.get("elements", []):
             id = element.get("id")
             tags = element.get("tags", {})
             if "disused" in tags or "disused:public_transport" in tags or "abandoned" in tags:
                 logger.debug(f"Skipping disused or abandoned bus stop with id {id}")
                 continue
-            feature = {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [element["lon"], element["lat"]],
-                },
-                "properties": element.get("tags", {}),
-                "id": id,
+            stop = {
+                "gtfs_id": tags.pop("gtfs_id", None),
+                "navitia_id": None,
+                "osm_id": id,
+                "name": tags.pop("name", ""),
+                "description": tags.pop("description", None),
+                "line_gtfs_ids": [],
+                "line_osm_ids": [],
+                "geometry": Point(element["lon"], element["lat"]),
+                "other": tags,
             }
-            features.append(feature)
-        return {
-            "type": "FeatureCollection",
-            "generator": content.get("generator", "overpass-turbo"),
-            "copyright": content.get(
-                "copyright",
-                "The data included in this document is from www.openstreetmap.org. "
-                "The data is made available under ODbL.",
-            ),
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "features": features,
-        }
+            try:
+                BusStop(**stop)
+            except ValidationError as e:
+                logger.error(f"Validation error for bus stop with id {id}: {e}")
+                continue
+            stops.append(stop)
+        if len(stops) == 0:
+            logger.warning("No valid bus stops found in the data.")
+            return gpd.GeoDataFrame(
+                columns=[
+                    "gtfs_id",
+                    "navitia_id",
+                    "osm_id",
+                    "name",
+                    "description",
+                    "line_gtfs_ids",
+                    "line_osm_ids",
+                    "geometry",
+                    "other",
+                ],
+                geometry="geometry",
+            )
+        return gpd.GeoDataFrame(stops, geometry="geometry")
+
+    @classmethod
+    def fetch_from_file(cls, path: Path, **kwargs) -> dict | gpd.GeoDataFrame:
+        if path.suffix == ".parquet":
+            return gpd.read_parquet(path)
+        else:
+            return super().fetch_from_file(path, **kwargs)
 
 
 class OSMBusLinesProcessor(AbstractOSMProcessor):
