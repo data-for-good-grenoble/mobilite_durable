@@ -9,8 +9,11 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pandas as pd
 import requests
+from pydantic import ValidationError
 
+from src.models.bus_line import BusLine
 from src.settings import DATA_FOLDER
 from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
@@ -59,14 +62,24 @@ class AbstractOSMProcessor(ProcessorMixin):
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        if path.suffix in [".json", ".geojson"]:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        elif path.suffix == ".parquet":
+            return pd.read_parquet(path)
+        else:
+            raise ValueError(f"Unsupported file format: {path.suffix}")
 
     @classmethod
     def save(cls, content, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(content, f, ensure_ascii=False, indent=2)
+        if path.suffix in [".json", ".geojson"]:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(content, f, ensure_ascii=False, indent=2)
+        elif path.suffix == ".parquet":
+            content.to_parquet(path)
+        else:
+            raise ValueError(f"Unsupported file format: {path.suffix}")
 
 
 class OSMBusStopsProcessor(AbstractOSMProcessor):
@@ -116,8 +129,8 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
 
 
 class OSMBusLinesProcessor(AbstractOSMProcessor):
-    input_file = AbstractOSMProcessor.input_dir / "raw_bus_lines_isere.geojson"
-    output_file = AbstractOSMProcessor.output_dir / "bus_lines_isere.json"
+    input_file = AbstractOSMProcessor.input_dir / "raw_bus_lines_isere.json"
+    output_file = AbstractOSMProcessor.output_dir / "bus_lines_isere.parquet"
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
@@ -130,8 +143,8 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
         return cls.query_overpass(query, cls.api_timeout)
 
     @classmethod
-    def pre_process(cls, content, **kwargs) -> list[dict]:
-        res = []
+    def pre_process(cls, content: dict, **kwargs) -> pd.DataFrame:
+        rows = []
         for element in content["elements"]:
             if element["type"] == "relation":
                 id = element["id"]
@@ -140,16 +153,35 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
                     logger.debug(f"Skipping disused or abandoned bus line with id {id}")
                     continue
                 relation = {
-                    "id": id,
-                    "tags": tags,
-                    "stops": list(
+                    "gtfs_id": element["tags"].pop("gtfs_id", None),
+                    "osm_id": id,
+                    "name": tags.pop("name", ""),
+                    "from_location": tags.pop("from", None),
+                    "to": tags.pop("to", None),
+                    "network": tags.pop("network", None),
+                    "network_gtfs_id": None,
+                    "network_osm_id": None,
+                    "network_wikidata": tags.pop("network:wikidata", None),
+                    "operator": tags.pop("operator", None),
+                    "colour": tags.pop("colour", None),
+                    "text_colour": tags.pop("text_colour", None),
+                    "stop_gtfs_ids": [],
+                    "stops_osm_ids": list(
                         member["ref"]
                         for member in element["members"]
                         if member["role"] == "stop"
                     ),
+                    "school": tags.pop("bus", None) == "school",
+                    "geometry": None,
+                    "other": tags,
                 }
-                res.append(relation)
-        return res
+                try:
+                    BusLine(**relation)
+                except ValidationError as e:
+                    logger.error(f"Validation error for bus line with id {id}: {e}")
+                    continue
+                rows.append(relation)
+        return pd.DataFrame(rows)
 
 
 def main(**kwargs):
