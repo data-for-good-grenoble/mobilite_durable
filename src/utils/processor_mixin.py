@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Type
+from typing import Any, Type
 
 
 class ProcessorMixin:
@@ -26,7 +26,7 @@ class ProcessorMixin:
             cls.save(content, cls.output_file)
 
     @classmethod
-    def fetch(cls, reload_pipeline: bool = False) -> list:
+    def fetch(cls, reload_pipeline: bool = False) -> Any:
         """
         Récupère la donnée et la sauvegarde si besoin
         Il existe 3 niveaux d'informations : celle de l'api, celle de l'input_file et celle de l'output_file

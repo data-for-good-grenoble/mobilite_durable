@@ -6,15 +6,14 @@ Author: Nicolas Grosjean
 
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
-import requests
 from pydantic import ValidationError
 from shapely.geometry import Point
 
+from src.api.overpass import OverpassAPI
 from src.models.bus_line import BusLine
 from src.models.bus_stop import BusStop
 from src.settings import DATA_FOLDER
@@ -31,37 +30,11 @@ class AbstractOSMProcessor(ProcessorMixin):
     output_dir = input_dir
 
     # API declaration and technical limitations
-    api_class = True  # TODO Export API into OverpassAPI class
-    API_URL = "https://overpass-api.de/api/interpreter"
+    api_class: type[OverpassAPI] = OverpassAPI
     api_timeout = 600  # seconds
 
     # Geographical delimitation
     area = "Isère"
-
-    @classmethod
-    def query_overpass(cls, query: str, timeout: int) -> dict:
-        """
-        Query Overpass API.
-
-        Args:
-            query: Overpass QL query
-            timeout: Query timeout in seconds
-
-        Returns:
-            JSON response from the API
-        """
-        start = datetime.now()
-        response = requests.post(
-            cls.API_URL,
-            data={"data": query},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=timeout,
-        )
-        response.raise_for_status()
-        end = datetime.now()
-        elapsed = end - start
-        logger.info(f"Getting overpass query results in {elapsed.seconds}s")
-        return response.json()
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs) -> dict | pd.DataFrame:
@@ -97,11 +70,12 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
         node["highway"="bus_stop"](area.searchArea);
         out geom;
         """
-        return cls.query_overpass(query, cls.api_timeout)
+        return cls.api_class.query_overpass(query, cls.api_timeout)
 
     @classmethod
     def pre_process(cls, content: dict, **kwargs) -> gpd.GeoDataFrame:
         # Create a dict mapping stop OSM IDs to the list of line OSM IDs containing them
+        logger.info("Fetching bus lines to map stops to lines")
         lines_df: pd.DataFrame = OSMBusLinesProcessor.fetch(reload_pipeline=False)
         osm_stop_to_line_ids = {}
         for _, row in lines_df.iterrows():
@@ -110,6 +84,7 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
                 if stop_osm_id not in osm_stop_to_line_ids:
                     osm_stop_to_line_ids[stop_osm_id] = []
                 osm_stop_to_line_ids[stop_osm_id].append(line_osm_id)
+        logger.info("Mapping stops to lines completed")
 
         stops = []
         for element in content.get("elements", []):
@@ -173,7 +148,7 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
         relation["type"="route"]["route"="bus"](area.searchArea);
         out;
         """
-        return cls.query_overpass(query, cls.api_timeout)
+        return cls.api_class.query_overpass(query, cls.api_timeout)
 
     @classmethod
     def pre_process(cls, content: dict, **kwargs) -> pd.DataFrame:
@@ -220,7 +195,9 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 def main(**kwargs):
     reload_pipeline = True
     # Process lines first to get the mapping of stops to lines when processing stops
+    logger.info("Processing OSM bus lines")
     OSMBusLinesProcessor.run(reload_pipeline)
+    logger.info("Processing OSM bus stops")
     OSMBusStopsProcessor.run(reload_pipeline)
 
 
