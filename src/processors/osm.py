@@ -101,6 +101,16 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
 
     @classmethod
     def pre_process(cls, content: dict, **kwargs) -> gpd.GeoDataFrame:
+        # Create a dict mapping stop OSM IDs to the list of line OSM IDs containing them
+        lines_df: pd.DataFrame = OSMBusLinesProcessor.fetch(reload_pipeline=False)
+        osm_stop_to_line_ids = {}
+        for _, row in lines_df.iterrows():
+            line_osm_id = row["osm_id"]
+            for stop_osm_id in row["stops_osm_ids"]:
+                if stop_osm_id not in osm_stop_to_line_ids:
+                    osm_stop_to_line_ids[stop_osm_id] = []
+                osm_stop_to_line_ids[stop_osm_id].append(line_osm_id)
+
         stops = []
         for element in content.get("elements", []):
             id = element.get("id")
@@ -115,7 +125,7 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
                 "name": tags.pop("name", ""),
                 "description": tags.pop("description", None),
                 "line_gtfs_ids": [],
-                "line_osm_ids": [],
+                "line_osm_ids": osm_stop_to_line_ids.get(id, []),
                 "geometry": Point(element["lon"], element["lat"]),
                 "other": tags,
             }
@@ -209,8 +219,9 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 
 def main(**kwargs):
     reload_pipeline = True
-    OSMBusStopsProcessor.run(reload_pipeline)
+    # Process lines first to get the mapping of stops to lines when processing stops
     OSMBusLinesProcessor.run(reload_pipeline)
+    OSMBusStopsProcessor.run(reload_pipeline)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,37 @@
+from typing import Any
+
 import geopandas as gpd
 import pandas as pd
 import pytest
+from pytest_mock import MockerFixture
 from shapely.geometry import Point
 
 from src.processors.osm import OSMBusLinesProcessor, OSMBusStopsProcessor
+
+
+@pytest.fixture
+def fetch_bus_lines_mocker(mocker: MockerFixture):
+    mocker.patch.object(
+        OSMBusLinesProcessor,
+        "fetch",
+        return_value=pd.DataFrame(
+            [
+                {
+                    "osm_id": 1,
+                    "stops_osm_ids": [101, 102],
+                },
+                {
+                    "osm_id": 2,
+                    "stops_osm_ids": [101, 103],
+                },
+                {
+                    "osm_id": 3,
+                    "stops_osm_ids": [101, 104],
+                },
+            ]
+        ),
+    )
+    return mocker
 
 
 class TestOSMBusLinesProcessorPreProcess:
@@ -226,11 +254,53 @@ class TestOSMBusStopsProcessorPreProcess:
     Author: Nicolas Grosjean
     """
 
-    def test_pre_process_ko_bad_type(self, caplog: pytest.LogCaptureFixture):
-        pass
+    def test_pre_process_ko_bad_type(
+        self, caplog: pytest.LogCaptureFixture, fetch_bus_lines_mocker: MockerFixture
+    ):
+        input_content = {
+            "elements": [
+                {
+                    "type": "node",
+                    "id": "string_instead_of_int",
+                    "lon": "2.3522",
+                    "lat": "48.8566",
+                    "tags": {
+                        "gtfs_id": "STOP123",
+                        "name": "Test Stop A",
+                        "description": "Test description",
+                    },
+                }
+            ]
+        }
+        expected = gpd.GeoDataFrame(
+            columns=[
+                "gtfs_id",
+                "navitia_id",
+                "osm_id",
+                "name",
+                "description",
+                "line_gtfs_ids",
+                "line_osm_ids",
+                "geometry",
+                "other",
+            ],
+            geometry="geometry",
+        )
+        expected_log_message = (
+            "Validation error for bus stop with id string_instead_of_int: 1 validation error for BusStop\n"
+            "osm_id\n"
+            "  Input should be a valid integer, unable to parse string as an integer"
+            " [type=int_parsing, input_value='string_instead_of_int', input_type=str]\n"
+            "    For further information visit https://errors.pydantic.dev/2.11/v/int_parsing"
+        )
+        latest_expected_log_message = "No valid bus stops found in the data."
+        result = OSMBusStopsProcessor.pre_process(input_content)
+        pd.testing.assert_frame_equal(result, expected)
+        assert caplog.records[-1].message == latest_expected_log_message
+        assert caplog.records[-2].message == expected_log_message
 
-    def test_pre_process_no_elements(self):
-        input_content = {"elements": []}
+    def test_pre_process_no_elements(self, fetch_bus_lines_mocker: MockerFixture):
+        input_content: dict[str, Any] = {"elements": []}
         expected = gpd.GeoDataFrame(
             columns=[
                 "gtfs_id",
@@ -248,14 +318,14 @@ class TestOSMBusStopsProcessorPreProcess:
         result = OSMBusStopsProcessor.pre_process(input_content)
         pd.testing.assert_frame_equal(result, expected)
 
-    def test_pre_process_ok_one_element(self):
+    def test_pre_process_ok_one_element(self, fetch_bus_lines_mocker: MockerFixture):
         input_content = {
             "elements": [
                 {
                     "type": "node",
                     "id": 1,
-                    "lon": "2.3522",
-                    "lat": "48.8566",
+                    "lon": "2.35222",
+                    "lat": "48.85658",
                     "tags": {
                         "gtfs_id": "STOP123",
                         "name": "Test Stop A",
@@ -274,7 +344,7 @@ class TestOSMBusStopsProcessorPreProcess:
                     "description": "Test description",
                     "line_gtfs_ids": [],
                     "line_osm_ids": [],
-                    "geometry": Point(2.3522, 48.8566),
+                    "geometry": Point(2.35222, 48.85658),
                     "other": {},
                 }
             ],
@@ -283,12 +353,12 @@ class TestOSMBusStopsProcessorPreProcess:
         result = OSMBusStopsProcessor.pre_process(input_content)
         pd.testing.assert_frame_equal(result, expected)
 
-    def test_pre_process_ok_multiple_elements(self):
+    def test_pre_process_ok_multiple_elements(self, fetch_bus_lines_mocker: MockerFixture):
         input_content = {
             "elements": [
                 {
                     "type": "node",
-                    "id": 1,
+                    "id": 101,
                     "lon": "2.3522",
                     "lat": "48.8566",
                     "tags": {
@@ -310,7 +380,7 @@ class TestOSMBusStopsProcessorPreProcess:
                 },
                 {
                     "type": "node",
-                    "id": 3,
+                    "id": 104,
                     "lon": "2.3333",
                     "lat": "48.8600",
                     "tags": {
@@ -326,22 +396,22 @@ class TestOSMBusStopsProcessorPreProcess:
                 {
                     "gtfs_id": "STOP123",
                     "navitia_id": None,
-                    "osm_id": 1,
+                    "osm_id": 101,
                     "name": "Test Stop A",
                     "description": "Test description A",
                     "line_gtfs_ids": [],
-                    "line_osm_ids": [],
+                    "line_osm_ids": [1, 2, 3],
                     "geometry": Point(2.3522, 48.8566),
                     "other": {},
                 },
                 {
                     "gtfs_id": "STOP456",
                     "navitia_id": None,
-                    "osm_id": 3,
+                    "osm_id": 104,
                     "name": "Test Stop C",
                     "description": None,
                     "line_gtfs_ids": [],
-                    "line_osm_ids": [],
+                    "line_osm_ids": [3],
                     "geometry": Point(2.3333, 48.8600),
                     "other": {},
                 },
