@@ -11,5 +11,7 @@ class BusStop(BaseModel):
     description: str | None
     line_gtfs_ids: list[str]
     line_osm_ids: list[int]
+    network: str | None
+    network_gtfs_id: str | None
     geometry: Any | None
     other: dict[str, Any]

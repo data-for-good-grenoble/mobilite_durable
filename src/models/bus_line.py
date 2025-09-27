@@ -11,7 +11,6 @@ class BusLine(BaseModel):
     to: str | None
     network: str | None
     network_gtfs_id: str | None
-    network_osm_id: int | None
     network_wikidata: str | None
     operator: str | None
     colour: str | None
