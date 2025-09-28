@@ -50,81 +50,80 @@ class ProcessorMixin:
         """
         Récupère la donnée et la sauvegarde si besoin
         Il existe 3 niveaux d'informations : celle de l'api, celle de l'input_file et celle de l'output_file
-        Lors d'un process où `reload_pipeline` is False (cas par défaut) :
+        Si `reload_pipeline` is `False` (cas par défaut) :
             - on va regarder l'output_file, sur lequel on va appliquer `postprocess`, s'il n'existe pas ou s'il n'est pas configuré
             - on va regarder l'input_file, sur lequel on va appliquer `preprocess`, s'il n'existe pas ou s'il n'est pas configuré
-            - on va regarder l'api_class, pour télécharger la donnée et la sauvegarder
-        Lors d'un process où `reload_pipeline` is True, le process est inversé
+            - on va regarder la méthode `fetch_from_api`, pour télécharger la donnée et la sauvegarder
+        Si `reload_pipeline` is `True`, le process est inversé
         """
         fetch_api_kwargs = fetch_api_kwargs or dict()
         fetch_input_kwargs = fetch_input_kwargs or dict()
         fetch_output_kwargs = fetch_output_kwargs or dict()
 
-        if reload_pipeline:
-            api_content = cls.fetch_and_save_from_api(**fetch_api_kwargs)
-            input_content = cls.fetch_and_save_from_input_file(
-                api_content, **fetch_input_kwargs
+        try:
+            preprocessed_data = cls.get_and_save_preprocessed_data(
+                fetch_api_kwargs,
+                fetch_input_kwargs,
+                fetch_output_kwargs,
+                reload_pipeline=reload_pipeline,
+                save_input_file=fetch_input_kwargs.get("save_input_file", True),
+                save_output_file=fetch_output_kwargs.get("save_output_file", True),
             )
-            output_content = cls.fetch_from_output_file(input_content, **fetch_output_kwargs)
+            return cls.post_process(preprocessed_data)
+        except Exception as e:
+            if not reload_pipeline:
+                # Input or output file can be no more compatible with code, we try reload pipeline
+                logger.exception(e)
+                return cls.fetch(
+                    True, fetch_api_kwargs, fetch_input_kwargs, fetch_output_kwargs
+                )
+            else:
+                # Nothing to retry, raise the exception to avoid infinite loop
+                raise e
+
+    @classmethod
+    def get_and_save_preprocessed_data(
+        cls,
+        fetch_api_kwargs: dict,
+        fetch_input_kwargs: dict,
+        fetch_output_kwargs: dict,
+        *,
+        reload_pipeline: bool,
+        save_input_file: bool,
+        save_output_file: bool,
+    ) -> Any | None:
+        if not reload_pipeline and cls.output_file and cls.output_file.exists():
+            return cls.fetch_from_file(cls.output_file, **fetch_output_kwargs)
         else:
-            output_content = cls.fetch_from_output_file(**fetch_output_kwargs)
-            if output_content is None:
-                input_content = cls.fetch_and_save_from_input_file(**fetch_input_kwargs)
-                if input_content is None:
-                    api_content = cls.fetch_and_save_from_api(**fetch_api_kwargs)
-                    input_content = cls.fetch_and_save_from_input_file(
-                        api_content, **fetch_input_kwargs
-                    )
-                output_content = cls.fetch_from_output_file(
-                    input_content, **fetch_output_kwargs
-                )
-        return output_content
-
-    @classmethod
-    def fetch_and_save_from_api(
-        cls, content: Any | None = None, save: bool = True
-    ) -> Any | None:
-        if content is None and cls.api_class:
-            content = cls.fetch_from_api()
-
-        if save and cls.input_file:
-            if content is None:
-                logger.error(f"{cls.__name__}: cannot save because `content` attribute is None")
-            else:
-                cls.input_file.parent.mkdir(parents=True, exist_ok=True)
-                cls.save(content, cls.input_file)
-        return content
-
-    @classmethod
-    def fetch_and_save_from_input_file(
-        cls, content: Any | None = None, save: bool = True
-    ) -> Any | None:
-        if content is None and cls.input_file:
-            if cls.input_file.exists():
-                content = cls.fetch_from_file(cls.input_file)
-            else:
-                logger.warning(f"{cls.__name__}: {cls.input_file} does not exist")
-
-        processed = cls.pre_process(content)
-        if save and cls.output_file:
-            if processed is None:
-                logger.error(
-                    f"{cls.__name__}: cannot save because `processed` attribute is None"
-                )
-            else:
+            api_content = cls.get_and_save_raw_data(
+                fetch_api_kwargs,
+                fetch_input_kwargs,
+                reload_pipeline=reload_pipeline,
+                save_input_file=save_input_file,
+            )
+            preprocessed_data = cls.pre_process(api_content)
+            if save_output_file and cls.output_file:
                 cls.output_file.parent.mkdir(parents=True, exist_ok=True)
-                cls.save(processed, cls.output_file)
-        return processed
+                cls.save(preprocessed_data, cls.output_file)
+            return preprocessed_data
 
     @classmethod
-    def fetch_from_output_file(cls, content: Any | None = None) -> Any | None:
-        if content is None and cls.output_file:
-            if cls.output_file.exists():
-                content = cls.fetch_from_file(cls.output_file)
-            else:
-                logger.warning(f"{cls.__name__}: {cls.output_file} does not exist")
-
-        return cls.post_process(content)
+    def get_and_save_raw_data(
+        cls,
+        fetch_api_kwargs: dict,
+        fetch_input_kwargs: dict,
+        *,
+        reload_pipeline: bool,
+        save_input_file: bool,
+    ) -> Any | None:
+        if not reload_pipeline and cls.input_file and cls.input_file.exists():
+            return cls.fetch_from_file(cls.input_file, **fetch_input_kwargs)
+        else:
+            api_content = cls.fetch_from_api(**fetch_api_kwargs)
+            if save_input_file and cls.input_file:
+                cls.input_file.parent.mkdir(parents=True, exist_ok=True)
+                cls.save(api_content, cls.input_file)
+            return api_content
 
     @classmethod
     def fetch_from_api(cls, **kwargs):
