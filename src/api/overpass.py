@@ -3,10 +3,8 @@ from datetime import datetime
 
 import requests
 
-from utils.logger import setup_logger
-
 # Set up logger
-logger = setup_logger(level=logging.DEBUG, name=__name__)
+logger = logging.getLogger(__name__)
 
 
 class OverpassAPI:
