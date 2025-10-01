@@ -7,9 +7,6 @@ flowchart TD
         direction TB
         SOURCE_TDG>transport.data.gouv.fr] --> PF_TDG("`Pipeline,
                     filtrage`")
-        PF_TDG -->|"`__transportdatagouv.py__
-                    Récupère les GTFS`"| FE_TDG("`Extraction,
-                    filtrage`")
         SOURCE_TRANSIT>transit] --> PFE_TRANSIT("`Extraction`")
         SOURCE_OSM>openstreetmap] --> PFE_OSM("`Pipeline,
                     filtrage,
@@ -17,14 +14,19 @@ flowchart TD
         SOURCE_C2C>camp2camp] --> PFE_C2C("`Extraction BDD`")
 
 
-
+        PF_TDG -->|"`__transportdatagouv.py__
+                    Télécharge les GTFS`"| FE_TDG("`Extraction,
+                    filtrage`")
         FE_TDG -->|"`__gtf_extractor.py__
                     Extrait les arrêts et lignes`"| EXPORT_TDG[("`GeoParquet
                     GeoJSON
                     CSV`")]
         PFE_TRANSIT --> EXPORT_TRANSIT[("`...`")]
-        PFE_OSM --> EXPORT_OSM[("`...`")]
+        PFE_OSM --> EXPORT_OSM[("`GeoParquet
+                    Geo/JSON`")]
         PFE_C2C --> EXPORT_C2C[("`CSV`")]
+
+
         EXPORT_TDG --> ANALYSE{"`Analyse
                     et regroupement
                     des données`"}
@@ -46,8 +48,8 @@ flowchart TD
                     manquants`"]
         IDENTIFIER -->|...| LIGNES_MANQUANTES["`fa:fa-bus Lignes
                     manquantes`"]
-        ARRETS_MANQUANTS -->|"`__visualise_stops_diff.py__
-                créé un geoJSON avec un code couleur`"| DIFF[("`GeoJSON`")]
+        ARRETS_MANQUANTS -->|"`__visualise_stops_diff.ipynb__
+                créé une carte avec un code couleur`"| DIFF((("`Carte`")))
         ENRICHIR --> PRIX[fa:fa-eur Prix]
         ENRICHIR --> VELO[fa:fa-bicycle Vélo]
         ENRICHIR --> SPECIAUX[fa:fa-graduation-cap  Réservé scolaire]
@@ -60,17 +62,16 @@ flowchart TD
         style SOURCE_TRANSIT fill:#f96
 
     %% TODO
-        style PFE_OSM stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
         style PFE_C2C stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
         style LIGNES_MANQUANTES stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
-        style EXPORT_OSM stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
-        style EXPORT_C2C stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
-        style EXPORT_TRANSIT stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
     %% In progress
+        style PFE_OSM stroke:#00f,stroke-width:2px
         style PF_TDG stroke:#00f,stroke-width:2px
         style FE_TDG stroke:#00f,stroke-width:2px
         style EXPORT_TDG stroke:#00f,stroke-width:2px
-        style EXPORT_C2C stroke:#00f,stroke-width:
+        style EXPORT_C2C stroke:#00f,stroke-width:2px
+        style EXPORT_OSM stroke:#00f,stroke-width:2px
+        style EXPORT_TRANSIT stroke:#00f,stroke-width:2px
         style ARRETS_MANQUANTS stroke:#00f,stroke-width:2px
         style DIFF stroke:#00f,stroke-width:2px
         style PFE_TRANSIT stroke:#00f,stroke-width:2px
