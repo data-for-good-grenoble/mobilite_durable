@@ -7,7 +7,7 @@ flowchart TD
         direction TB
         SOURCE_TDG>transport.data.gouv.fr] --> PF_TDG("`Pipeline,
                     filtrage`")
-        SOURCE_TRANSIT>transit] --> PFE_TRANSIT("`Extraction`")
+        SOURCE_TRANSIT>transit] --> PFE_TRANSIT("`Scrapping`")
         SOURCE_OSM>openstreetmap] --> PFE_OSM("`Pipeline,
                     filtrage,
                     extraction`")
@@ -21,7 +21,7 @@ flowchart TD
                     Extrait les arrêts et lignes`"| EXPORT_TDG[("`GeoParquet
                     GeoJSON
                     CSV`")]
-        PFE_TRANSIT --> EXPORT_TRANSIT[("`...`")]
+        PFE_TRANSIT --> EXPORT_TRANSIT[("`transit.json`")]
         PFE_OSM --> EXPORT_OSM[("`GeoParquet
                     Geo/JSON`")]
         PFE_C2C --> EXPORT_C2C[("`CSV`")]
