@@ -60,6 +60,39 @@ windows:
 .venv\Scripts\activate
 ```
 
+## Installer et synchroniser avec Git LFS
+
+### Installer git lfs sur votre machine
+
+[Linux](https://github.com/git-lfs/git-lfs/blob/main/INSTALLING.md)
+
+
+```sh
+sudo apt install git-lfs
+```
+
+ou
+
+```sh
+sudo yum install git-lfs
+```
+
+Pour Windows, git lfs est déjà inclus dans Git for Windows
+
+### Installer git lfs dans le projet et récupérer les fichiers
+
+Pour installer [Git LFS](https://git-lfs.com/):
+
+```sh
+git lfs install
+```
+
+Pour synchroniser les fichiers suivis par LFS :
+
+```sh
+git lfs pull
+```
+
 ## Exécuter un script
 
 ```sh
