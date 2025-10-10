@@ -48,8 +48,8 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     # API URL
     API_URL = "https://transport.data.gouv.fr/api/datasets"
 
-    # Reload filrtered datasets
-    reload_pipeline = False
+    # Reload filtered datasets
+    reload_pipeline = True
 
     # Force download even if the GTFS already exists
     force_download = False
@@ -64,7 +64,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     delete_old_files = True
 
     # Number of days a resource is considered valid
-    resource_validity_days_threshold = 365
+    resource_validity_days_threshold = 90
 
     # Limit to x datasets for testing
     test_limit: int | None = None
@@ -87,6 +87,42 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
             return json.load(f)
 
     @classmethod
+    def get_dataset_recent_date(cls, dataset_id: str) -> datetime | None:
+        """Query dataset details to determine the most relevant recent date.
+
+        Prefers history[0].last_up_to_date_at, then history[0].updated_at,
+        then history[0].inserted_at. Returns a timezone-aware datetime in UTC
+        when possible.
+        """
+        if not dataset_id:
+            return None
+
+        url = f"{cls.API_URL}/{dataset_id}"
+        resp = requests.get(url, timeout=cls.timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        history = data.get("history") or []
+        recent_str = None
+        if history:
+            entry = history[0] or {}
+            # Prefer last_up_to_date_at, fallback to updated_at, then inserted_at
+            recent_str = (
+                entry.get("last_up_to_date_at")
+                or entry.get("updated_at")
+                or entry.get("inserted_at")
+            )
+        # Parse ISO datetime (with Z)
+        recent_dt = None
+        if recent_str:
+            try:
+                # Ensure Z is parsed as UTC
+                recent_dt = datetime.fromisoformat(recent_str.replace("Z", "+00:00"))
+            except Exception:
+                recent_dt = None
+
+        return recent_dt
+
+    @classmethod
     def save(cls, content, path: Path) -> None:
         """Save content to a file"""
         super().save(content, path)
@@ -106,13 +142,9 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
         Filter datasets for:
         - type="public-transit"
         - resources containing the "bus" or "coach" or "tramway" mode
-        - resources updated within a specified number of days
+        - datasets considered up-to-date according to transport.data.gouv.fr dataset history
         - resources have the available flag set to True
         - metadata end_date not in the past (if it exists)
-
-        TODO:
-        - some resources can contain both bus and another mode, for now download if at least one bus/coach/tramway resource is available
-        - some resources can have long-distance lines across Europe like flixbus
         """
         filtered_datasets = []
         # Create a timezone-aware datetime
@@ -126,17 +158,18 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
             if dataset.get("type") != "public-transit":
                 continue
 
+            dataset_id = dataset.get("id")
+
             # Find valid resources
             valid_resources = []
             for resource in dataset.get("resources", []):
                 # Check if resource has bus or coach or tramway mode
                 modes = resource.get("modes", [])
-                has_desired_mode = any(
+                has_desired_mode = not modes or any(
                     mode in modes for mode in ["bus", "coach", "tramway", "cable_car"]
                 )
-                # has_rail = "rail" in modes
 
-                if not has_desired_mode:  # or has_rail:
+                if not has_desired_mode:
                     logger.info(
                         f"Not a desired mode in GTFS: {dataset.get('id', 'unknown')}. Skipping."
                     )
@@ -155,7 +188,11 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                     continue
 
                 # Check metadata end_date if it exists
-                if "metadata" in resource and "end_date" in resource["metadata"]:
+                if (
+                    "metadata" in resource
+                    and "end_date" in resource["metadata"]
+                    and resource["metadata"]["end_date"]
+                ):
                     end_date_str = resource["metadata"]["end_date"]
                     try:
                         # Parse the end_date (assuming format YYYY-MM-DD)
@@ -173,18 +210,19 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
                         )
                         continue
 
-                # Check if the resource is recent
-                if "updated" in resource:
-                    updated_date = datetime.fromisoformat(
-                        resource["updated"].replace("Z", "+00:00")
+                # Check dataset recency from dataset API
+                try:
+                    recent_dt = cls.get_dataset_recent_date(dataset_id)
+                except Exception as e:
+                    logger.error(
+                        f"Failed to fetch dataset history for {dataset_id}: {e}. Skipping dataset."
                     )
-                    if updated_date < valid_days_threshold:
-                        logger.warning(
-                            f"Dataset {dataset.get('id', 'unknown')} last updated in {updated_date}. Skipping."
-                        )
-                        continue
-
-                # TODO Add more filters...
+                    continue
+                if recent_dt and recent_dt < valid_days_threshold:
+                    logger.warning(
+                        f"Dataset {dataset_id} considered outdated (history date {recent_dt}). Skipping."
+                    )
+                    continue
 
                 valid_resources.append(resource)
 
@@ -310,9 +348,6 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
 
 
 def main(**kwargs):
-    TransportDataGouvProcessor.test_limit = None  # Defaults to None
-    TransportDataGouvProcessor.force_download = False  # Defaults to False
-    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 365
     logger.info("Running the full pipeline")
     TransportDataGouvProcessor.run_all(
         reload_pipeline=TransportDataGouvProcessor.reload_pipeline
@@ -321,4 +356,9 @@ def main(**kwargs):
 
 if __name__ == "__main__":
     logger = setup_logger(level=logging.DEBUG)
+
+    # TransportDataGouvProcessor.test_limit = 1 # Defaults to None
+    TransportDataGouvProcessor.force_download = False  # Defaults to False
+    TransportDataGouvProcessor.resource_validity_days_threshold = 90  # Defaults to 90
+
     main()
