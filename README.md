@@ -60,6 +60,46 @@ windows:
 .venv\Scripts\activate
 ```
 
+## Installer et synchroniser avec Git LFS
+
+Git LFS permet de stocker des fichiers volumineux sur GitHub en ne stockant que les pointeurs vers ces fichiers dans git.
+[Plus d'infos](https://git-lfs.com/).
+
+### Installer git lfs sur votre machine
+
+[Linux](https://github.com/git-lfs/git-lfs/blob/main/INSTALLING.md)
+
+
+```sh
+sudo apt install git-lfs
+```
+
+ou
+
+```sh
+sudo yum install git-lfs
+```
+
+Pour Windows, git lfs est déjà inclus dans Git for Windows
+
+### Installer git lfs dans le projet et récupérer les fichiers
+
+Pour installer [Git LFS](https://git-lfs.com/):
+
+```sh
+git lfs install
+```
+
+Pour synchroniser les fichiers suivis par LFS :
+
+```sh
+git lfs pull
+```
+
+### Mettre un nouveau type de fichiers sur git lfs
+
+On peut ajouter un nouveau type de fichiers géré par git lfs avec la commande `git lfs add` ou en modificant directement le fichier [.gitattributes](.gitattributes).
+
 ## Exécuter un script
 
 ```sh
