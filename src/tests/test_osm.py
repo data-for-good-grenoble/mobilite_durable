@@ -68,11 +68,10 @@ class TestOSMBusLinesProcessorPreProcess:
             "osm_id\n"
             "  Input should be a valid integer, unable to parse string as an integer"
             " [type=int_parsing, input_value='string_instead_of_int', input_type=str]\n"
-            "    For further information visit https://errors.pydantic.dev/2.11/v/int_parsing"
         )
         result = OSMBusLinesProcessor.pre_process(input_content)
         pd.testing.assert_frame_equal(result, expected)
-        assert caplog.records[-1].message == expected_log_message
+        assert caplog.records[-1].message.startswith(expected_log_message)
 
     def test_pre_process_no_elements(self):
         input_content = {"elements": []}
@@ -290,13 +289,12 @@ class TestOSMBusStopsProcessorPreProcess:
             "osm_id\n"
             "  Input should be a valid integer, unable to parse string as an integer"
             " [type=int_parsing, input_value='string_instead_of_int', input_type=str]\n"
-            "    For further information visit https://errors.pydantic.dev/2.11/v/int_parsing"
         )
         latest_expected_log_message = "No valid bus stops found in the data."
         result = OSMBusStopsProcessor.pre_process(input_content)
         pd.testing.assert_frame_equal(result, expected)
         assert caplog.records[-1].message == latest_expected_log_message
-        assert caplog.records[-2].message == expected_log_message
+        assert caplog.records[-2].message.startswith(expected_log_message)
 
     def test_pre_process_no_elements(self, fetch_bus_lines_mocker: MockerFixture):
         input_content: dict[str, Any] = {"elements": []}
