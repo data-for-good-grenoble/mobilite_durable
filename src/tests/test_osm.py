@@ -181,7 +181,7 @@ class TestOSMBusLinesProcessorPreProcess:
                 },
             ]
         }
-        expected = pd.DataFrame(
+        expected = gpd.GeoDataFrame(
             [
                 {
                     "gtfs_id": None,
