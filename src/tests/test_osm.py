@@ -4,6 +4,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
+from shapely import LineString
 from shapely.geometry import Point
 
 from src.processors.osm import OSMBusLinesProcessor, OSMBusStopsProcessor
@@ -133,6 +134,71 @@ class TestOSMBusLinesProcessorPreProcess:
                     "stops_osm_ids": [101, 102],
                     "school": True,
                     "geometry": None,
+                    "other": {"public_transport:version": "2"},
+                }
+            ]
+        )
+        result = OSMBusLinesProcessor.pre_process(input_content)
+        pd.testing.assert_frame_equal(result, expected)
+
+    def test_pre_process_ok_one_relation_with_geometry(self):
+        input_content = {
+            "elements": [
+                {
+                    "type": "node",
+                    "id": 10001,
+                    "lat": 45.2017891,
+                    "lon": 5.7817565,
+                },
+                {"type": "node", "id": 10002, "lat": 45.2029284, "lon": 5.7823635},
+                {
+                    "type": "way",
+                    "id": 1000,
+                    "nodes": [
+                        10001,
+                        10002,
+                    ],
+                },
+                {
+                    "type": "relation",
+                    "id": 1,
+                    "tags": {
+                        "name": "Test Bus Line",
+                        "from": "Test Stop A",
+                        "to": "Test Stop B",
+                        "network": "Test Network",
+                        "operator": "Test Operator",
+                        "colour": "#FF0000",
+                        "text_colour": "#FFFFFF",
+                        "bus": "school",
+                        "public_transport:version": "2",
+                    },
+                    "members": [
+                        {"role": "stop", "ref": 101},
+                        {"role": "stop", "ref": 102},
+                        {"role": "", "type": "way", "ref": 1000},
+                    ],
+                },
+            ]
+        }
+        expected = pd.DataFrame(
+            [
+                {
+                    "gtfs_id": None,
+                    "osm_id": 1,
+                    "name": "Test Bus Line",
+                    "from_location": "Test Stop A",
+                    "to": "Test Stop B",
+                    "network": "Test Network",
+                    "network_gtfs_id": None,
+                    "network_wikidata": None,
+                    "operator": "Test Operator",
+                    "colour": "#FF0000",
+                    "text_colour": "#FFFFFF",
+                    "stop_gtfs_ids": [],
+                    "stops_osm_ids": [101, 102],
+                    "school": True,
+                    "geometry": LineString([(5.7817565, 45.2017891), (5.7823635, 45.2029284)]),
                     "other": {"public_transport:version": "2"},
                 }
             ]
