@@ -11,7 +11,8 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 from pydantic import ValidationError
-from shapely.geometry import Point
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import unary_union
 
 from src.api.overpass import OverpassAPI
 from src.models.bus_line import BusLine
@@ -38,6 +39,10 @@ class AbstractOSMProcessor(ProcessorMixin):
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs) -> dict | pd.DataFrame:
+        fetch_geometry = kwargs.pop("fetch_geometry", False)
+        if fetch_geometry:
+            logger.info("Fetching data with geometry suffix from file")
+            path = path.with_name(f"{path.stem}_with_geometry{path.suffix}")
         if path.suffix in [".json", ".geojson"]:
             with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -47,7 +52,11 @@ class AbstractOSMProcessor(ProcessorMixin):
             raise ValueError(f"Unsupported file format: {path.suffix}")
 
     @classmethod
-    def save(cls, content, path: Path) -> None:
+    def save(cls, content, path: Path, **kwargs) -> None:
+        save_geometry = kwargs.pop("save_geometry", False)
+        if save_geometry:
+            logger.info("Saving data with geometry suffix to file")
+            path = path.with_name(f"{path.stem}_with_geometry{path.suffix}")
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.suffix in [".json", ".geojson"]:
             with open(path, "w", encoding="utf-8") as f:
@@ -146,17 +155,51 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
-        query = f"""
-        [out:json][timeout:{cls.api_timeout}];
-        area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
-        relation["type"="route"]["route"="bus"](area.searchArea);
-        out;
-        """
+        fetch_geometry = kwargs.pop("fetch_geometry", False)
+        if fetch_geometry:
+            logger.info("Fetching bus lines with geometry from Overpass API")
+            query = f"""
+            [out:json][timeout:{cls.api_timeout}];
+            area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
+            relation["type"="route"]["route"="bus"](area.searchArea)->.busRoutes;
+            .busRoutes out body;
+            (way(r.busRoutes); node(w););
+            out skel qt;
+            """
+        else:
+            logger.info("Fetching bus lines without geometry from Overpass API")
+            query = f"""
+            [out:json][timeout:{cls.api_timeout}];
+            area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
+            relation["type"="route"]["route"="bus"](area.searchArea);
+            out;
+            """
         return cls.api_class.query_overpass(query, cls.api_timeout)
 
     @classmethod
-    def pre_process(cls, content: dict, **kwargs) -> pd.DataFrame:
+    def pre_process(cls, content: dict, **kwargs) -> pd.DataFrame | gpd.GeoDataFrame:
         rows = []
+
+        # Create the ways geometry
+        nodes: dict[int, tuple[float, float]] = {
+            element["id"]: (element["lon"], element["lat"])
+            for element in content["elements"]
+            if element["type"] == "node" and "lat" in element and "lon" in element
+        }
+        ways: dict[int, LineString | Polygon] = dict()
+        for element in content["elements"]:
+            if element["type"] == "way":
+                if "nodes" not in element:
+                    continue
+                id = element["id"]
+                coords = [nodes[node_id] for node_id in element["nodes"]]
+                if coords[0] == coords[-1]:
+                    geom = Polygon(coords)
+                else:
+                    geom = LineString(coords)
+                ways[id] = geom
+
+        # Create the bus lines (relations)
         for element in content["elements"]:
             if element["type"] == "relation":
                 id = element["id"]
@@ -183,7 +226,17 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
                         if member["role"] == "stop"
                     ),
                     "school": tags.pop("bus", None) == "school",
-                    "geometry": None,
+                    "geometry": unary_union(
+                        list(
+                            ways[member["ref"]]
+                            for member in element["members"]
+                            if member["role"] == ""
+                            and member["type"] == "way"
+                            and member["ref"] in ways
+                        )
+                    )
+                    if ways
+                    else None,
                     "other": tags,
                 }
                 try:
@@ -192,16 +245,37 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
                     logger.error(f"Validation error for bus line with id {id}: {e}")
                     continue
                 rows.append(relation)
-        return pd.DataFrame(rows)
+        if ways:
+            return gpd.GeoDataFrame(rows, geometry="geometry")
+        else:
+            return pd.DataFrame(rows)
+
+    @classmethod
+    def fetch_from_file(cls, path: Path, **kwargs) -> dict | pd.DataFrame | gpd.GeoDataFrame:
+        fetch_geometry = kwargs.pop("fetch_geometry", False)
+        if fetch_geometry and path.suffix == ".parquet":
+            logger.info("Fetching data with geometry suffix from file")
+            path = path.with_name(f"{path.stem}_with_geometry{path.suffix}")
+            return gpd.read_parquet(path)
+        else:
+            return super().fetch_from_file(path, **kwargs)
 
 
 def main(**kwargs):
     reload_pipeline = True
-    # Process lines first to get the mapping of stops to lines when processing stops
-    logger.info("Processing OSM bus lines")
+    # Process lines without geometry first to get the mapping of stops to lines when processing stops
+    logger.info("Processing OSM bus lines without geometry")
     OSMBusLinesProcessor.run(reload_pipeline)
     logger.info("Processing OSM bus stops")
     OSMBusStopsProcessor.run(reload_pipeline)
+    logger.info("Processing OSM bus lines with geometry")
+    OSMBusLinesProcessor.run(
+        reload_pipeline,
+        fetch_api_kwargs={"fetch_geometry": True},
+        fetch_input_kwargs={"fetch_geometry": True},
+        fetch_output_kwargs={"fetch_geometry": True},
+        save_kwargs={"save_geometry": True},
+    )
 
 
 if __name__ == "__main__":
