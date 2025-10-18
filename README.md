@@ -132,6 +132,12 @@ windows:
 .venv\Scripts\jupyter lab
 ```
 
+## Tests
+
+```sh
+uv run pytest
+```
+
 ## Scrapping
 
 Voir le [README du sous-dossier](src/scrapping/README.md).
