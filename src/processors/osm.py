@@ -17,7 +17,7 @@ from shapely.ops import unary_union
 from src.api.overpass import OverpassAPI
 from src.models.bus_line import BusLine
 from src.models.bus_stop import BusStop
-from src.settings import DATA_FOLDER
+from src.settings import DATA_FOLDER, EPSG_WGS84
 from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
 
@@ -123,7 +123,7 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
             stops.append(stop)
         if len(stops) == 0:
             logger.warning("No valid bus stops found in the data.")
-            return gpd.GeoDataFrame(
+            gdf = gpd.GeoDataFrame(
                 columns=[
                     "gtfs_id",
                     "navitia_id",
@@ -139,7 +139,10 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
                 ],
                 geometry="geometry",
             )
-        return gpd.GeoDataFrame(stops, geometry="geometry")
+        else:
+            gdf = gpd.GeoDataFrame(stops, geometry="geometry")
+        gdf.set_crs(EPSG_WGS84, inplace=True)
+        return gdf
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs) -> dict | gpd.GeoDataFrame:
@@ -246,7 +249,9 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
                     continue
                 rows.append(relation)
         if ways:
-            return gpd.GeoDataFrame(rows, geometry="geometry")
+            gdf = gpd.GeoDataFrame(rows, geometry="geometry")
+            gdf.set_crs(EPSG_WGS84, inplace=True)
+            return gdf
         else:
             return pd.DataFrame(rows)
 
