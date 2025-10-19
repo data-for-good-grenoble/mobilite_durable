@@ -196,11 +196,7 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
                     continue
                 id = element["id"]
                 coords = [nodes[node_id] for node_id in element["nodes"]]
-                if coords[0] == coords[-1]:
-                    geom = Polygon(coords)
-                else:
-                    geom = LineString(coords)
-                ways[id] = geom
+                ways[id] = LineString(coords)
 
         # Create the bus lines (relations)
         for element in content["elements"]:
