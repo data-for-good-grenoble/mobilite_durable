@@ -6,7 +6,7 @@ import tempfile
 import zipfile
 from decimal import Decimal
 from pathlib import Path
-from typing import Pattern
+from typing import Any, Pattern
 
 import geopandas as gpd
 import pandas as pd
@@ -85,7 +85,7 @@ class C2CBusStopsProcessor(ProcessorMixin):
     output_file = output_dir / "bus_stops_isere.parquet"
 
     @classmethod
-    def fetch_from_file(cls, path: Path, **kwargs) -> gpd.GeoDataFrame:
+    def fetch_from_file(cls, path: Path, **kwargs) -> list[dict] | gpd.GeoDataFrame:
         if path.suffix == ".parquet":
             return gpd.read_parquet(path)
         else:
@@ -99,7 +99,57 @@ class C2CBusStopsProcessor(ProcessorMixin):
             raise ValueError(f"Unsupported file format: {path.suffix}")
 
     @classmethod
-    def _fetch_from_sql_file(cls) -> gpd.GeoDataFrame:
+    def pre_process(cls, content: list[dict] | None, **kwargs) -> gpd.GeoDataFrame | None:
+        lines_by_stop_and_network: dict[
+            tuple(str, str, str, str, Any), list[dict[str, str | int]]
+        ] = dict()
+        for stop_area in content:
+            key = (
+                stop_area["navitia_id"],
+                stop_area["name"],
+                stop_area["srid"],
+                stop_area["network"],
+                stop_area["geometry"],
+            )
+            if key not in lines_by_stop_and_network:
+                lines_by_stop_and_network[key] = []
+            lines_by_stop_and_network[key].append(
+                {"stoparea_id": stop_area["stoparea_id"], "line": stop_area["line"]}
+            )
+        stops = []
+        for key, value in lines_by_stop_and_network.items():
+            stop = {
+                "gtfs_id": None,
+                "navitia_id": key[0],
+                "osm_id": None,
+                "name": key[1],
+                "description": None,
+                "line_gtfs_ids": [],
+                "line_osm_ids": [],
+                "network": key[3],
+                "network_gtfs_id": None,
+                "geometry": key[4],
+                "other": {
+                    "stoparea_id_and_line": value,
+                    "srid": key[2],
+                },
+            }
+            try:
+                BusStop(**stop)
+            except ValidationError as e:
+                logger.error(f"Validation error for bus stop with id {id}: {e}")
+                continue
+            stops.append(stop)
+
+        # Create GeoDataFrame
+        if stops:
+            gdf = gpd.GeoDataFrame(stops, geometry="geometry", crs="EPSG:3857")
+            return gdf
+        else:
+            return gpd.GeoDataFrame([])
+
+    @classmethod
+    def _fetch_from_sql_file(cls) -> list[dict]:
         """Parse SQL dump to extract bus stop data into a DataFrame.
 
         Author: Laurent Sorba"""
@@ -109,12 +159,12 @@ class C2CBusStopsProcessor(ProcessorMixin):
                 # Extract SQL file to temporary directory
                 zip_ref.extract(sql_filename_inside_zip, tmp_dir)
                 sql_file_path = Path(tmp_dir) / sql_filename_inside_zip
-                stops_gdf = cls._parse_sql_dump(sql_file_path)
-                logger.info(f"Loaded {len(stops_gdf)} bus stops from SQL dump")
-                return stops_gdf
+                stop_areas = cls._parse_sql_dump(sql_file_path)
+                logger.info(f"Loaded {len(stop_areas)} bus stop areas from SQL dump")
+                return stop_areas
 
     @classmethod
-    def _parse_sql_dump(cls, sql_file: Path):
+    def _parse_sql_dump(cls, sql_file: Path) -> list[dict]:
         """Parse SQL file to extract bus stop data into a DataFrame.
 
         Author: Laurent Sorba"""
@@ -233,39 +283,20 @@ class C2CBusStopsProcessor(ProcessorMixin):
 
                 # Add to list
                 stop = {
-                    "gtfs_id": None,
                     "navitia_id": navitia_id,
-                    "osm_id": None,
                     "name": stoparea_name,
-                    "description": None,
-                    "line_gtfs_ids": [],
-                    "line_osm_ids": [],
                     "network": operator,
-                    "network_gtfs_id": None,
                     "geometry": Point(x, y),
-                    "other": {
-                        "stoparea_id": stoparea_id,
-                        "line": line,
-                        "srid": srid,
-                    },
+                    "stoparea_id": stoparea_id,
+                    "line": line,
+                    "srid": srid,
                 }
-                try:
-                    BusStop(**stop)
-                except ValidationError as e:
-                    logger.error(f"Validation error for bus stop with id {id}: {e}")
-                    continue
                 stopareas.append(stop)
 
             except Exception:
                 # Skip problematic rows
                 logger.warning(f"Skipping problematic stoparea entry: {values_str}")
-
-        # Create GeoDataFrame
-        if stopareas:
-            gdf = gpd.GeoDataFrame(stopareas, geometry="geometry", crs="EPSG:3857")
-            return gdf
-        else:
-            return gpd.GeoDataFrame([])
+        return stopareas
 
 
 def main(**kwargs):
