@@ -9,6 +9,7 @@ from src.utils.processor_mixin import ProcessorMixin
 
 class DummyProcessorMixin(ProcessorMixin):
     save_contents: list[str] = []
+    api_class = "fake api class"
 
     @classmethod
     def write_dummy_input_file(cls):
@@ -48,6 +49,11 @@ class NoContentProcessorMixin(ProcessorMixin):
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs):
         return None
+
+    @classmethod
+    def write_dummy_input_file(cls):
+        with open(cls.input_file, "w", encoding="utf-8") as f:
+            f.write("dummy input content")
 
     @classmethod
     def write_dummy_output_file(cls):
@@ -232,7 +238,21 @@ class TestRun:
         assert DummyProcessorMixin.save_contents == expected_save_contents
 
     def test_no_content(self, tmp_path: Path, caplog: pytest.LogCaptureFixture):
+        NoContentProcessorMixin.input_file = None
         NoContentProcessorMixin.output_file = tmp_path / "output.txt"
         NoContentProcessorMixin.write_dummy_output_file()
         NoContentProcessorMixin.run()
         assert caplog.records[-1].message == "NoContentProcessorMixin: have no content"
+
+    def test_no_content_reload_true(self, tmp_path: Path, caplog: pytest.LogCaptureFixture):
+        NoContentProcessorMixin.input_file = tmp_path / "input.txt"
+        NoContentProcessorMixin.write_dummy_input_file()
+        NoContentProcessorMixin.output_file = None
+        NoContentProcessorMixin.run(reload_pipeline=True)
+        assert caplog.records[-1].message == "NoContentProcessorMixin: have no content"
+
+    def test_no_content_reload_true_exception(self):
+        NoContentProcessorMixin.input_file = None
+        NoContentProcessorMixin.output_file = None
+        with pytest.raises(ValueError, match="api_class is not defined"):
+            NoContentProcessorMixin.run(reload_pipeline=True)
