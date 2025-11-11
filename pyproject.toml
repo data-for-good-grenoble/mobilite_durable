@@ -24,6 +24,7 @@ dev = [
 test = [
     "pytest>=8.3.5,<9.0.0",
     "pytest-mock>=3.15.1,<4.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
 ]
 scrap = [
     "scrapy>=2.13.3,<3.0.0",
@@ -67,5 +68,13 @@ scrap = [
     line-ending = "auto"
 
 [tool.pytest.ini_options]
-    addopts = ["--import-mode=importlib"]
-    pythonpath = ["."]
+    addopts = ["--import-mode=importlib", "--cov=src", "--cov-report=term-missing", "--no-cov-on-fail", "--cov-branch"]
+    pythonpath = ["src"]
+
+
+[tool.coverage.run]
+branch = true
+data_file = ".coverage/default_output"
+omit = [
+    "src/tests/*",
+]

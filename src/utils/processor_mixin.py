@@ -116,9 +116,15 @@ class ProcessorMixin:
         reload_pipeline: bool,
         save_input_file: bool,
     ) -> Any | None:
-        if not reload_pipeline and cls.input_file and cls.input_file.exists():
+        if (
+            (cls.api_class is None or not reload_pipeline)
+            and cls.input_file
+            and cls.input_file.exists()
+        ):
             return cls.fetch_from_file(cls.input_file, **fetch_input_kwargs)
         else:
+            if cls.api_class is None:
+                raise ValueError("api_class is not defined")
             api_content = cls.fetch_from_api(**fetch_api_kwargs)
             if save_input_file and cls.input_file:
                 cls.input_file.parent.mkdir(parents=True, exist_ok=True)
