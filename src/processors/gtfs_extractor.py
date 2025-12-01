@@ -33,7 +33,6 @@ Example:
 import logging
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from datetime import datetime
 from enum import IntEnum
 from functools import lru_cache
 from pathlib import Path
@@ -46,6 +45,8 @@ import pandas as pd
 from pyproj import Transformer
 from shapely.geometry import LineString, MultiLineString, Point
 
+from src.models.bus_line import BusLine
+from src.models.bus_stop import BusStop
 from src.settings import DATA_FOLDER, EPSG_WEB_MERCATOR, EPSG_WGS84
 from src.utils.logger import setup_logger
 
@@ -328,21 +329,8 @@ class GTFSExtractor:
         initial_size = len(df)
         logger.debug(f"Cleaning stops dataframe with {initial_size} rows")
 
-        # Remove rows with missing essential data
-        df_clean = df.dropna(subset=["stop_id", "stop_name", "geometry"])
-
-        # Remove duplicates with a defensive approach
-        # if {"agency_id", "agency_name", "stop_id"}.issubset(df_clean.columns):
-        #     df_clean = df_clean.drop_duplicates(subset=["agency_id", "agency_name", "stop_id"])
-
-        # Remove stops with invalid coordinates
-        if {"stop_lat", "stop_lon"}.issubset(df_clean.columns):
-            df_clean = df_clean[
-                (df_clean["stop_lat"] >= -90)
-                & (df_clean["stop_lat"] <= 90)
-                & (df_clean["stop_lon"] >= -180)
-                & (df_clean["stop_lon"] <= 180)
-            ]
+        # Remove rows with missing essential data (BusStop schema)
+        df_clean = df.dropna(subset=["gtfs_id", "name", "geometry"])
 
         # Check for missing columns and add them with default values
         for col in GTFSStopsExtractor.stops_cols:
@@ -364,15 +352,17 @@ class GTFSExtractor:
         initial_size = len(df)
         logger.debug(f"Cleaning lines dataframe with {initial_size} rows")
 
-        # Remove rows with missing essential data
-        df_clean = df.dropna(subset=["route_id", "route_name", "geometry", "stop_count"])
-
-        # Remove duplicates with a defensive approach
-        # if {"agency_id", "agency_name", "route_id"}.issubset(df_clean.columns):
-        #     df_clean = df_clean.drop_duplicates(subset=["agency_id", "agency_name", "route_id"])
+        # Remove rows with missing essential data (BusLine schema)
+        df_clean = df.dropna(subset=["gtfs_id", "name", "geometry"])
 
         # Remove lines with no geometry or stops
-        df_clean = df_clean[(df_clean["geometry"].notna()) & (df_clean["stop_count"] > 0)]
+        if "stop_gtfs_ids" in df_clean.columns:
+            valid_stops_list = df_clean["stop_gtfs_ids"].apply(
+                lambda x: isinstance(x, (list, tuple)) and len(x) > 0
+            )
+            df_clean = df_clean[(df_clean["geometry"].notna()) & valid_stops_list]
+        else:
+            df_clean = df_clean[df_clean["geometry"].notna()]
 
         # Check for missing columns and add them with default values
         for col in GTFSLinesExtractor.lines_cols:
@@ -395,15 +385,19 @@ class GTFSExtractor:
 class GTFSStopsExtractor(GTFSExtractor):
     """Extractor for GTFS stops with line information"""
 
+    # Columns aligned with BusStop Pydantic model
     stops_cols = [
-        "agency_id",
-        "agency_name",
-        "stop_id",
-        "stop_name",
-        "stop_code",
-        "stop_desc",
-        "stop_lines",
+        "gtfs_id",
+        "navitia_id",
+        "osm_id",
+        "name",
+        "description",
+        "line_gtfs_ids",
+        "line_osm_ids",
+        "network",
+        "network_gtfs_id",
         "geometry",
+        "other",
     ]
 
     def extract_stops(self, agency_id: str, agency_name: str, feed: gk.Feed) -> pd.DataFrame:
@@ -491,12 +485,42 @@ class GTFSStopsExtractor(GTFSExtractor):
         )
 
         if not self.insert_line_info:
-            return stops
+            enriched_stops = stops.copy()
+        else:
+            # Add line information
+            enriched_stops = self._add_line_info_to_stops(stops, feed_for_agency)
 
-        # Add line information
-        stops = self._add_line_info_to_stops(stops, feed_for_agency)
+        # Map to BusStop schema
+        def to_bus_stop_row(row: pd.Series) -> dict:
+            line_ids = []
+            if "stop_lines" in row and isinstance(row["stop_lines"], list):
+                line_ids = [d.get("line_id") for d in row["stop_lines"] if isinstance(d, dict)]
+            other: Dict = {}
+            # Include extra useful GTFS fields in 'other'
+            for key in [
+                "stop_code",
+                "route_type",
+            ]:
+                if key in row.index and pd.notna(row[key]):
+                    other[key] = row[key]
+            return {
+                "gtfs_id": row.get("stop_id"),
+                "navitia_id": None,
+                "osm_id": None,
+                "name": row.get("stop_name"),
+                "description": str(row.get("stop_desc")) if "stop_desc" in row else None,
+                "line_gtfs_ids": line_ids,
+                "line_osm_ids": [],
+                "network": row.get("agency_name"),
+                "network_gtfs_id": row.get("agency_id"),
+                "geometry": row.get("geometry"),
+                "other": other,
+            }
 
-        return stops
+        bus_stop_rows = [to_bus_stop_row(r) for _, r in enriched_stops.iterrows()]
+        # Validate with Pydantic and normalize to dicts
+        validated = [BusStop(**r).model_dump() for r in bus_stop_rows]
+        return pd.DataFrame(validated)
 
     def _add_line_info_to_stops(self, stops: pd.DataFrame, feed: gk.Feed) -> pd.DataFrame:
         """Add line information to stops"""
@@ -642,17 +666,24 @@ class GTFSStopsExtractor(GTFSExtractor):
 class GTFSLinesExtractor(GTFSExtractor):
     """Extractor for GTFS lines with geometry and stop information"""
 
+    # Columns aligned with BusLine Pydantic model
     lines_cols = [
-        "agency_id",
-        "agency_name",
-        "route_id",
-        "route_name",
-        "route_type",
-        "route_color",
-        "route_text_color",
+        "gtfs_id",
+        "osm_id",
+        "name",
+        "from_location",
+        "to",
+        "network",
+        "network_gtfs_id",
+        "network_wikidata",
+        "operator",
+        "colour",
+        "text_colour",
+        "stop_gtfs_ids",
+        "stops_osm_ids",
+        "school",
         "geometry",
-        "stop_ids",
-        "stop_count",
+        "other",
     ]
 
     def extract_lines(self, agency_id: str, agency_name: str, feed: gk.Feed) -> pd.DataFrame:
@@ -756,29 +787,49 @@ class GTFSLinesExtractor(GTFSExtractor):
         # Create geometry
         geometry = self._create_route_geometry(route_stop_times, trip_ids)
 
-        # Prepare line data
-        line_data = {
-            "route_id": route_id,
-            "route_name": (
-                route["route_short_name"]
-                if pd.notna(route["route_short_name"])
-                and str(route["route_short_name"]).strip() != ""
-                else route["route_long_name"]
-            ),
-            "route_type": route["route_type"],
-            "agency_id": route["agency_id"],
-            "agency_name": route["agency_name"],
-            "geometry": geometry,
-            "stop_ids": stop_ids,
+        # Prepare BusLine-shaped data
+        name = (
+            route["route_short_name"]
+            if pd.notna(route["route_short_name"])
+            and str(route["route_short_name"]).strip() != ""
+            else route["route_long_name"]
+        )
+        other: Dict = {
+            "route_type": route.get("route_type"),
+            "route_short_name": route.get("route_short_name"),
+            "route_long_name": route.get("route_long_name"),
             "stop_count": len(stop_ids),
         }
+        if "route_color" in route.index and pd.notna(route["route_color"]):
+            colour = route["route_color"]
+        else:
+            colour = None
+        if "route_text_color" in route.index and pd.notna(route["route_text_color"]):
+            text_colour = route["route_text_color"]
+        else:
+            text_colour = None
 
-        # Add optional fields
-        for col in ["route_color", "route_text_color"]:
-            if col in route.index and pd.notna(route[col]):
-                line_data[col] = route[col]
+        bus_line_dict = {
+            "gtfs_id": route_id,
+            "osm_id": None,
+            "name": name,
+            "from_location": None,
+            "to": None,
+            "network": route.get("agency_name"),
+            "network_gtfs_id": route.get("agency_id"),
+            "network_wikidata": None,
+            "operator": None,
+            "colour": colour,
+            "text_colour": text_colour,
+            "stop_gtfs_ids": stop_ids,
+            "stops_osm_ids": [],
+            "school": False,
+            "geometry": geometry,
+            "other": other,
+        }
 
-        return line_data
+        # Validate with Pydantic
+        return BusLine(**bus_line_dict).model_dump()
 
     def _create_route_geometry(
         self, route_stop_times: pd.DataFrame, trip_ids: List[str]

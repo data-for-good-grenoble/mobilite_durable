@@ -125,7 +125,7 @@ class TransportDataGouvProcessor(ProcessorMixin, DownloaderMixin):
     @classmethod
     def save(cls, content, path: Path) -> None:
         """Save content to a file"""
-        super().save(content, path)
+        # super().save(content, path)
 
         # If it's a JSON file, save as JSON
         if path.suffix == ".json":
