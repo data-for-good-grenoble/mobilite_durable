@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from pyproj import Geod
 from tqdm import tqdm
@@ -47,6 +48,8 @@ class DistancesProcessor(ProcessorMixin):
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> pd.DataFrame:
+        keep_old_distances = kwargs.pop("keep_old_distances", False)
+
         # Get bus stops and activities in the area
         area_bus_stops_gdf = cls._get_bus_stops().rename(
             columns={"geometry": "bus_stop_geometry"}
@@ -61,6 +64,25 @@ class DistancesProcessor(ProcessorMixin):
             how="cross",
         )
 
+        # Merge with old distances to avoid recomputing them
+        if keep_old_distances and cls.output_file.exists():
+            old_distances_df = cls.fetch_from_file(cls.output_file)
+            placeholder_distance = -1.0
+            placeholder_distance2 = -2.0
+            old_distances_df["distance_m"] = old_distances_df["distance_m"].fillna(
+                placeholder_distance
+            )
+            cross_df = cross_df.merge(
+                old_distances_df,
+                on=cls.bus_stop_columns + ["Id wp"],
+                how="left",
+                suffixes=("", "_old"),
+            )
+            cross_df["distance_m"] = cross_df["distance_m"].fillna(placeholder_distance2)
+            cross_df["distance_m"] = cross_df["distance_m"].replace(
+                placeholder_distance, np.nan
+            )
+
         # Calculate distances using the API
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             for batch_id in tqdm(
@@ -70,12 +92,15 @@ class DistancesProcessor(ProcessorMixin):
             ):
                 batch_df = cross_df.iloc[batch_id : batch_id + 1000]
                 futures = {
-                    executor.submit(cls._compute_distance, batch_df.iloc[i]): batch_id + i
+                    executor.submit(
+                        cls._compute_distance_if_not_already_computed, batch_df.iloc[i]
+                    ): batch_id + i
                     for i in range(len(batch_df))
                 }
                 for future in concurrent.futures.as_completed(futures):
                     i = futures[future]
                     cross_df.at[i, "distance_m"] = future.result()
+        cross_df.update(cross_df)
         return cross_df[cls.bus_stop_columns + ["Id wp", "distance_m"]]
 
     @classmethod
@@ -141,6 +166,12 @@ class DistancesProcessor(ProcessorMixin):
         )
 
     @classmethod
+    def _compute_distance_if_not_already_computed(cls, row: pd.Series) -> float | None:
+        if "distance_m" in row and (pd.isna(row["distance_m"]) or row["distance_m"] >= 0):
+            return row["distance_m"]  # Already computed or ignored
+        return cls._compute_distance(row)
+
+    @classmethod
     def _compute_distance(cls, row: pd.Series) -> float | None:
         _, _, straight_distance = cls.geod.inv(
             row["bus_stop_geometry"].x,
@@ -169,7 +200,7 @@ class DistancesProcessor(ProcessorMixin):
 def main(**kwargs):
     reload_pipeline = True
     logger.info("Computing distances from bus stops to activities...")
-    DistancesProcessor.run(reload_pipeline)
+    DistancesProcessor.run(reload_pipeline, fetch_api_kwargs={"keep_old_distances": True})
 
 
 if __name__ == "__main__":
