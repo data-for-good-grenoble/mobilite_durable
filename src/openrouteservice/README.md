@@ -45,7 +45,7 @@ curl 'http://localhost:8080/ors/v2/health'
 ```
 
 Cela renvoie `{"status":"not ready"}` quand le graphe est en cours de calcul
-ou `{"status":"not ready"}` quand c'est fini et que le service est prêt à être requêté.
+ou `{"status":"ready"}` quand c'est fini et que le service est prêt à être requêté.
 
 ## Arrêter le container
 

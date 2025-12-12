@@ -40,6 +40,12 @@ class DistancesProcessor(ProcessorMixin):
     # Threshold to not compute distance between too far points (in meters)
     max_distance_threshold = 5000
 
+    # Size of the batch of distances computed by each thread
+    batch_size = 1000
+
+    # Maximum number of threads to use to compute distances
+    max_workers = 10
+
     # Columns to keep to identify bus stops
     bus_stop_columns = ["osm_id", "gtfs_id", "navitia_id"]
 
@@ -65,12 +71,16 @@ class DistancesProcessor(ProcessorMixin):
         )
 
         # Merge with old distances to avoid recomputing them
-        if keep_old_distances and cls.output_file.exists():
+        if keep_old_distances and cls.output_file is not None and cls.output_file.exists():
             old_distances_df = cls.fetch_from_file(cls.output_file)
-            placeholder_distance = -1.0
-            placeholder_distance2 = -2.0
+            # Keep NaN distances in the old distances dataframe be setting them to a temporary negative value
+            # before the merge, then set them back to NaN after the merge
+            temporary_negative_value = -1.0
+            # Set another negative value to distinguish from the temporary one after the merge
+            # Distances will be computed later only for remaining negative values
+            another_negative_value = -2.0
             old_distances_df["distance_m"] = old_distances_df["distance_m"].fillna(
-                placeholder_distance
+                temporary_negative_value
             )
             cross_df = cross_df.merge(
                 old_distances_df,
@@ -78,19 +88,19 @@ class DistancesProcessor(ProcessorMixin):
                 how="left",
                 suffixes=("", "_old"),
             )
-            cross_df["distance_m"] = cross_df["distance_m"].fillna(placeholder_distance2)
+            cross_df["distance_m"] = cross_df["distance_m"].fillna(another_negative_value)
             cross_df["distance_m"] = cross_df["distance_m"].replace(
-                placeholder_distance, np.nan
+                temporary_negative_value, np.nan
             )
 
         # Calculate distances using the API
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=cls.max_workers) as executor:
             for batch_id in tqdm(
-                range(0, len(cross_df), 1000),
-                total=(len(cross_df) + 999) // 1000,
+                range(0, len(cross_df), cls.batch_size),
+                total=(len(cross_df) + cls.batch_size - 1) // cls.batch_size,
                 desc="Submitting distance computations",
             ):
-                batch_df = cross_df.iloc[batch_id : batch_id + 1000]
+                batch_df = cross_df.iloc[batch_id : batch_id + cls.batch_size]
                 futures = {
                     executor.submit(
                         cls._compute_distance_if_not_already_computed, batch_df.iloc[i]
@@ -117,13 +127,12 @@ class DistancesProcessor(ProcessorMixin):
             DATA_FOLDER / "transportdatagouv/contour-des-departements.geojson"
         )
         activity_gdf = gpd.read_parquet(DATA_FOLDER / "C2C/depart_topos_stops_isere.parquet")
-        activity_gdf.rename(
+        activity_gdf = activity_gdf.rename(
             columns={
                 "navitia_id": "Id wp",
                 "name": "Name wp",
                 "nombre_de_depart_de_topo": "nbr_topo",
-            },
-            inplace=True,
+            }
         )
         area_activity_df = (
             gpd.sjoin(
