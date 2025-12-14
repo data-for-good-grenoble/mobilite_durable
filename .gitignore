@@ -179,3 +179,9 @@ errors.log
 src/data/**/*_output.*
 src/data/**/raw_*
 .vscode
+!src/openrouteservice/ors-docker/
+src/openrouteservice/ors-docker/*
+!src/openrouteservice/ors-docker/config/
+src/openrouteservice/ors-docker/config/*
+!src/openrouteservice/ors-docker/config/ors-config.yml
+*.pbf
