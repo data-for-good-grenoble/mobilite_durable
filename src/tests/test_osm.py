@@ -69,7 +69,7 @@ class TestOSMBusLinesProcessorPreProcess:
             "osm_id\n"
             "  Input should be a valid integer, unable to parse string as an integer"
             " [type=int_parsing, input_value='string_instead_of_int', input_type=str]\n"
-            "    For further information visit https://errors.pydantic.dev/2.11/v/int_parsing"
+            "    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing"
         )
         result = OSMBusLinesProcessor.pre_process(input_content)
         pd.testing.assert_frame_equal(result, expected)
@@ -356,7 +356,7 @@ class TestOSMBusStopsProcessorPreProcess:
             "osm_id\n"
             "  Input should be a valid integer, unable to parse string as an integer"
             " [type=int_parsing, input_value='string_instead_of_int', input_type=str]\n"
-            "    For further information visit https://errors.pydantic.dev/2.11/v/int_parsing"
+            "    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing"
         )
         latest_expected_log_message = "No valid bus stops found in the data."
         result = OSMBusStopsProcessor.pre_process(input_content)

@@ -2,6 +2,8 @@
 #    uv pip compile pyproject.toml --output-file requirements.txt
 aiofiles==24.1.0
     # via mdm (pyproject.toml)
+annotated-types==0.7.0
+    # via pydantic
 branca==0.8.1
     # via folium
 certifi==2025.6.15
@@ -14,13 +16,27 @@ cffi==1.17.1
     # via curl-cffi
 charset-normalizer==3.4.2
     # via requests
+contourpy==1.3.3
+    # via matplotlib
+cramjam==2.11.0
+    # via fastparquet
 curl-cffi==0.11.4
     # via mdm (pyproject.toml)
+cycler==0.12.1
+    # via matplotlib
+fastparquet==2025.12.0
+    # via mdm (pyproject.toml)
 folium==0.20.0
-    # via gtfs-kit
+    # via
+    #   mdm (pyproject.toml)
+    #   gtfs-kit
+fonttools==4.61.1
+    # via matplotlib
+fsspec==2026.1.0
+    # via fastparquet
 geopandas==1.1.0
     # via gtfs-kit
-gtfs-kit==10.3.1
+gtfs-kit==12.0.2
     # via mdm (pyproject.toml)
 idna==3.10
     # via requests
@@ -28,33 +44,68 @@ jinja2==3.1.6
     # via
     #   branca
     #   folium
+joblib==1.5.3
+    # via scikit-learn
 json2html==1.3.0
     # via gtfs-kit
+kiwisolver==1.4.9
+    # via matplotlib
+mapclassify==2.10.0
+    # via mdm (pyproject.toml)
 markupsafe==3.0.2
     # via jinja2
+matplotlib==3.10.8
+    # via mdm (pyproject.toml)
+networkx==3.6.1
+    # via mapclassify
 numpy==2.3.1
     # via
+    #   contourpy
+    #   fastparquet
     #   folium
     #   geopandas
+    #   mapclassify
+    #   matplotlib
     #   pandas
+    #   pandas-stubs
     #   pyogrio
+    #   scikit-learn
+    #   scipy
     #   shapely
 packaging==25.0
     # via
+    #   fastparquet
     #   geopandas
+    #   matplotlib
     #   pyogrio
 pandas==2.3.0
     # via
+    #   fastparquet
     #   geopandas
     #   gtfs-kit
+    #   mapclassify
+pandas-stubs==2.3.0.250703
+    # via mdm (pyproject.toml)
+pillow==12.1.0
+    # via matplotlib
+pyarrow==23.0.0
+    # via mdm (pyproject.toml)
 pycparser==2.22
     # via cffi
+pydantic==2.12.5
+    # via mdm (pyproject.toml)
+pydantic-core==2.41.5
+    # via pydantic
 pyogrio==0.11.0
     # via geopandas
+pyparsing==3.3.2
+    # via matplotlib
 pyproj==3.7.1
     # via geopandas
 python-dateutil==2.9.0.post0
-    # via pandas
+    # via
+    #   matplotlib
+    #   pandas
 pytz==2025.2
     # via pandas
 requests==2.32.4
@@ -63,17 +114,34 @@ requests==2.32.4
     #   gtfs-kit
 rtree==1.4.0
     # via gtfs-kit
+scikit-learn==1.8.0
+    # via mapclassify
+scipy==1.17.0
+    # via
+    #   mapclassify
+    #   scikit-learn
 shapely==2.1.1
     # via
     #   geopandas
     #   gtfs-kit
 six==1.17.0
     # via python-dateutil
+threadpoolctl==3.6.0
+    # via scikit-learn
 tqdm==4.67.1
     # via mdm (pyproject.toml)
+types-pytz==2025.2.0.20251108
+    # via pandas-stubs
+typing-extensions==4.15.0
+    # via
+    #   pydantic
+    #   pydantic-core
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via pydantic
 tzdata==2025.2
     # via pandas
-urllib3==2.5.0
+urllib3==2.6.3
     # via requests
 xyzservices==2025.4.0
     # via folium
