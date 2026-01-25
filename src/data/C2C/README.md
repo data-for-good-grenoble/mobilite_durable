@@ -11,6 +11,7 @@ export C2C_DATA_PATH="$PWD/src/data/C2C"
 export C2C_DUMP_NAME="c2corg-anonymized.2025-12-10.dump"
 export C2C_SCHEMA_DUMP_NAME="$(basename $C2C_DUMP_NAME .dump).schema.sql"
 export C2C_STOPAREAS_DUMP_NAME="$(basename $C2C_DUMP_NAME .dump).sql"
+export C2C_WAYPOINTS_EXPORT_NAME="$(basename $C2C_DUMP_NAME .dump).waypoints.csv"
 
 # Start a postgis container
 docker run --rm --name c2cdb -e POSTGRES_PASSWORD=password -v $C2C_DATA_PATH:/data -p 5432:5432 -d docker.io/postgis/postgis:17-3.6-alpine
@@ -18,13 +19,16 @@ docker run --rm --name c2cdb -e POSTGRES_PASSWORD=password -v $C2C_DATA_PATH:/da
 # Extract the full schema
 docker exec c2cdb pg_restore --schema-only -f /data/$C2C_SCHEMA_DUMP_NAME /data/$C2C_DUMP_NAME
 
-# Restore the stopareas table in the container
+# Restore the full schema (includes custom types) then the stopareas and waypoints tables
 docker exec -u postgres c2cdb psql -d postgres -c "CREATE ROLE \"www-data\";"
-docker exec -u postgres c2cdb psql -d postgres -c "CREATE SCHEMA IF NOT EXISTS guidebook AUTHORIZATION postgres;"
-docker exec -u postgres c2cdb pg_restore -d postgres --table=stopareas /data/$C2C_DUMP_NAME
+docker exec -u postgres c2cdb pg_restore --schema-only -d postgres /data/$C2C_DUMP_NAME
+docker exec -u postgres c2cdb pg_restore -d postgres --table=stopareas --table=documents --table=waypoints /data/$C2C_DUMP_NAME
 
 # Extract stopareas table in a .sql file
 docker exec -u postgres c2cdb pg_dump --inserts -t guidebook.stopareas postgres > $C2C_DATA_PATH/$C2C_STOPAREAS_DUMP_NAME
+
+# Extract waypoints table in a .csv file
+docker exec -u postgres c2cdb psql -d postgres -c "\COPY guidebook.waypoints TO STDOUT WITH CSV HEADER" > $C2C_DATA_PATH/$C2C_WAYPOINTS_EXPORT_NAME
 
 # Stop (and remove) postgres container
 docker stop c2cdb
