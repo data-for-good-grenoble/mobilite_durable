@@ -30,4 +30,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     end = datetime.now()
-    logger.info(f"Duration: {end - start}s")
+    logger.info(f"Duration: {end - start}")
