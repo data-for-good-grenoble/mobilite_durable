@@ -1116,38 +1116,28 @@ def main(**kwargs):
     input_dir = DATA_FOLDER / "transportdatagouv"
     output_folder = DATA_FOLDER / "transportdatagouv"
 
-    # Extract stops from a folder containing multiple GTFS files
-    # stops_df = extract_gtfs_stops(
-    #     str(input_dir), str(output_folder), "csv", with_lines=True, area="38"
-    # )
-    # stops_df = extract_gtfs_stops(str(input_dir), str(output_folder), "geojson", with_lines=True, area="38")
-    # stops_df = extract_gtfs_stops(str(input_dir), str(output_folder), "parquet", with_lines=True, area="38")
-
-    # extract_gtfs_stops(str(input_dir), str(output_folder), "parquet", with_lines=True, area=None)
-    extract_gtfs_stops(
-        str(input_dir),
-        str(output_folder),
-        "parquet",
-        with_lines=True,
-        area="38",
-        exclude_route_types={GTFSRouteType.RAIL},
-    )
-
-    # Extract lines from a folder containing multiple GTFS files
-    # lines_df = extract_gtfs_lines(str(input_dir), str(output_folder), "csv", area="38")
-    # lines_df = extract_gtfs_lines(str(input_dir), str(output_folder), "geojson", area="38")
-    # lines_df = extract_gtfs_lines(str(input_dir), str(output_folder), "parquet", area="38")
-
-    # extract_gtfs_lines(str(input_dir), str(output_folder), "parquet", area=None, exclude_route_types={GTFSRouteType.RAIL})
-    extract_gtfs_lines(
-        str(input_dir),
-        str(output_folder),
-        "parquet",
-        area="38",
-        exclude_route_types={GTFSRouteType.RAIL},
-    )
+    # Extract stops then lines from a folder containing multiple GTFS files
+    for area_code in ["38", "73", "74"]:
+        extract_gtfs_stops(
+            str(input_dir),
+            str(output_folder),
+            "parquet",
+            with_lines=True,
+            area=area_code,
+            exclude_route_types={GTFSRouteType.RAIL},
+        )
+        extract_gtfs_lines(
+            str(input_dir),
+            str(output_folder),
+            "parquet",
+            area=area_code,
+            exclude_route_types={GTFSRouteType.RAIL},
+        )
 
 
 if __name__ == "__main__":
     logger = setup_logger(level=logging.DEBUG)
+    start = datetime.now()
     main()
+    end = datetime.now()
+    logger.info(f"Duration: {end - start}")
