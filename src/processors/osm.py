@@ -6,6 +6,7 @@ Author: Nicolas Grosjean
 
 import json
 import logging
+import time
 from pathlib import Path
 
 import geopandas as gpd
@@ -13,6 +14,7 @@ import pandas as pd
 from pydantic import ValidationError
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
+from slugify import slugify
 
 from src.api.overpass import OverpassAPI
 from src.models.bus_line import BusLine
@@ -34,7 +36,7 @@ class AbstractOSMProcessor(ProcessorMixin):
     api_class: type[OverpassAPI] = OverpassAPI
     api_timeout = 600  # seconds
 
-    # Geographical delimitation
+    # Default geographical delimitation
     area = "Isère"
 
     @classmethod
@@ -72,7 +74,15 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
     output_file = AbstractOSMProcessor.output_dir / "bus_stops_isere.parquet"
 
     @classmethod
+    def set_area(cls, area: str) -> "OSMBusStopsProcessor":
+        cls.area = area
+        cls.input_file = AbstractOSMProcessor.input_dir / f"raw_bus_stops_{slugify(area)}.json"
+        cls.output_file = AbstractOSMProcessor.output_dir / f"bus_stops_{slugify(area)}.parquet"
+        return cls
+
+    @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
+        logger.info(f"Fetching bus stops in {cls.area} from Overpass API")
         query = f"""
         [out:json][timeout:{cls.api_timeout}];
         area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
@@ -85,7 +95,9 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
     def pre_process(cls, content: dict, **kwargs) -> gpd.GeoDataFrame:
         # Create a dict mapping stop OSM IDs to the list of line OSM IDs containing them
         logger.info("Fetching bus lines to map stops to lines")
-        lines_df: pd.DataFrame = OSMBusLinesProcessor.fetch(reload_pipeline=False)
+        lines_df: pd.DataFrame = OSMBusLinesProcessor.set_area(cls.area).fetch(
+            reload_pipeline=False
+        )
         osm_stop_to_line_ids = {}
         for _, row in lines_df.iterrows():
             line_osm_id = row["osm_id"]
@@ -157,10 +169,17 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
     output_file = AbstractOSMProcessor.output_dir / "bus_lines_isere.parquet"
 
     @classmethod
+    def set_area(cls, area: str) -> "OSMBusLinesProcessor":
+        cls.area = area
+        cls.input_file = AbstractOSMProcessor.input_dir / f"raw_bus_lines_{slugify(area)}.json"
+        cls.output_file = AbstractOSMProcessor.output_dir / f"bus_lines_{slugify(area)}.parquet"
+        return cls
+
+    @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
         fetch_geometry = kwargs.pop("fetch_geometry", False)
         if fetch_geometry:
-            logger.info("Fetching bus lines with geometry from Overpass API")
+            logger.info(f"Fetching bus lines in {cls.area} with geometry from Overpass API")
             query = f"""
             [out:json][timeout:{cls.api_timeout}];
             area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
@@ -170,7 +189,7 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
             out skel qt;
             """
         else:
-            logger.info("Fetching bus lines without geometry from Overpass API")
+            logger.info(f"Fetching bus lines in {cls.area} without geometry from Overpass API")
             query = f"""
             [out:json][timeout:{cls.api_timeout}];
             area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
@@ -265,18 +284,22 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 def main(**kwargs):
     reload_pipeline = True
     # Process lines without geometry first to get the mapping of stops to lines when processing stops
-    logger.info("Processing OSM bus lines without geometry")
-    OSMBusLinesProcessor.run(reload_pipeline)
-    logger.info("Processing OSM bus stops")
-    OSMBusStopsProcessor.run(reload_pipeline)
-    logger.info("Processing OSM bus lines with geometry")
-    OSMBusLinesProcessor.run(
-        reload_pipeline,
-        fetch_api_kwargs={"fetch_geometry": True},
-        fetch_input_kwargs={"fetch_geometry": True},
-        fetch_output_kwargs={"fetch_geometry": True},
-        save_kwargs={"save_geometry": True},
-    )
+    for area in ["Isère", "Savoie", "Haute-Savoie"]:
+        logger.info(f"Processing OSM bus lines for {area}")
+        OSMBusLinesProcessor.set_area(area).run(reload_pipeline)
+        time.sleep(1)
+        logger.info(f"Processing OSM bus stops for {area}")
+        OSMBusStopsProcessor.set_area(area).run(reload_pipeline)
+        time.sleep(1)
+        logger.info(f"Processing OSM bus lines with geometry for {area}")
+        OSMBusLinesProcessor.set_area(area).run(
+            reload_pipeline,
+            fetch_api_kwargs={"fetch_geometry": True},
+            fetch_input_kwargs={"fetch_geometry": True},
+            fetch_output_kwargs={"fetch_geometry": True},
+            save_kwargs={"save_geometry": True},
+        )
+        time.sleep(5)
 
 
 if __name__ == "__main__":
