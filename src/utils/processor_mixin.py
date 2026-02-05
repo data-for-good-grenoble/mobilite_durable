@@ -23,6 +23,14 @@ class ProcessorMixin:
         raise Exception("Utility class")
 
     @classmethod
+    def get_input_file(cls) -> Path | None:
+        return cls.input_file
+
+    @classmethod
+    def get_output_file(cls) -> Path | None:
+        return cls.output_file
+
+    @classmethod
     def run(
         cls,
         reload_pipeline: bool = False,
@@ -98,8 +106,9 @@ class ProcessorMixin:
         save_input_file: bool,
         save_output_file: bool,
     ) -> Any | None:
-        if not reload_pipeline and cls.output_file and cls.output_file.exists():
-            return cls.fetch_from_file(cls.output_file, **fetch_output_kwargs)
+        output_file = cls.get_output_file()
+        if not reload_pipeline and output_file and output_file.exists():
+            return cls.fetch_from_file(output_file, **fetch_output_kwargs)
         else:
             api_content = cls.get_and_save_raw_data(
                 fetch_api_kwargs,
@@ -109,9 +118,9 @@ class ProcessorMixin:
                 save_input_file=save_input_file,
             )
             preprocessed_data = cls.pre_process(api_content)
-            if save_output_file and cls.output_file:
-                cls.output_file.parent.mkdir(parents=True, exist_ok=True)
-                cls.save(preprocessed_data, cls.output_file, **save_kwargs)
+            if save_output_file and output_file:
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                cls.save(preprocessed_data, output_file, **save_kwargs)
             return preprocessed_data
 
     @classmethod
@@ -124,19 +133,20 @@ class ProcessorMixin:
         reload_pipeline: bool,
         save_input_file: bool,
     ) -> Any | None:
+        input_file = cls.get_input_file()
         if (
             (cls.api_class is None or not reload_pipeline)
-            and cls.input_file
-            and cls.input_file.exists()
+            and input_file
+            and input_file.exists()
         ):
-            return cls.fetch_from_file(cls.input_file, **fetch_input_kwargs)
+            return cls.fetch_from_file(input_file, **fetch_input_kwargs)
         else:
             if cls.api_class is None:
                 raise ValueError("api_class is not defined")
             api_content = cls.fetch_from_api(**fetch_api_kwargs)
-            if save_input_file and cls.input_file:
-                cls.input_file.parent.mkdir(parents=True, exist_ok=True)
-                cls.save(api_content, cls.input_file, **save_kwargs)
+            if save_input_file and input_file:
+                input_file.parent.mkdir(parents=True, exist_ok=True)
+                cls.save(api_content, input_file, **save_kwargs)
             return api_content
 
     @classmethod

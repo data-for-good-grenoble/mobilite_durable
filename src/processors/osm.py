@@ -70,14 +70,17 @@ class AbstractOSMProcessor(ProcessorMixin):
 
 
 class OSMBusStopsProcessor(AbstractOSMProcessor):
-    input_file = AbstractOSMProcessor.input_dir / "raw_bus_stops_isere.geojson"
-    output_file = AbstractOSMProcessor.output_dir / "bus_stops_isere.parquet"
+    @classmethod
+    def get_input_file(cls) -> Path | None:
+        return AbstractOSMProcessor.input_dir / f"raw_bus_stops_{slugify(cls.area)}.json"
+
+    @classmethod
+    def get_output_file(cls) -> Path | None:
+        return AbstractOSMProcessor.output_dir / f"bus_stops_{slugify(cls.area)}.parquet"
 
     @classmethod
     def set_area(cls, area: str) -> "OSMBusStopsProcessor":
         cls.area = area
-        cls.input_file = AbstractOSMProcessor.input_dir / f"raw_bus_stops_{slugify(area)}.json"
-        cls.output_file = AbstractOSMProcessor.output_dir / f"bus_stops_{slugify(area)}.parquet"
         return cls
 
     @classmethod
@@ -165,14 +168,17 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
 
 
 class OSMBusLinesProcessor(AbstractOSMProcessor):
-    input_file = AbstractOSMProcessor.input_dir / "raw_bus_lines_isere.json"
-    output_file = AbstractOSMProcessor.output_dir / "bus_lines_isere.parquet"
+    @classmethod
+    def get_input_file(cls) -> Path | None:
+        return AbstractOSMProcessor.input_dir / f"raw_bus_lines_{slugify(cls.area)}.json"
+
+    @classmethod
+    def get_output_file(cls) -> Path | None:
+        return AbstractOSMProcessor.output_dir / f"bus_lines_{slugify(cls.area)}.parquet"
 
     @classmethod
     def set_area(cls, area: str) -> "OSMBusLinesProcessor":
         cls.area = area
-        cls.input_file = AbstractOSMProcessor.input_dir / f"raw_bus_lines_{slugify(area)}.json"
-        cls.output_file = AbstractOSMProcessor.output_dir / f"bus_lines_{slugify(area)}.parquet"
         return cls
 
     @classmethod
