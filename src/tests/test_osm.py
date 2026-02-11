@@ -7,7 +7,12 @@ from pytest_mock import MockerFixture
 from shapely import LineString
 from shapely.geometry import Point
 
-from src.processors.osm import OSMBusLinesProcessor, OSMBusStopsProcessor
+from src.processors.osm import (
+    IsereOSMBusLinesProcessor,
+    IsereOSMBusStopsProcessor,
+    OSMBusLinesProcessor,
+    OSMBusStopsProcessor,
+)
 
 
 @pytest.fixture
@@ -317,6 +322,33 @@ class TestOSMBusStopsProcessorPreProcess:
     Author: Nicolas Grosjean
     """
 
+    def test_pre_process_ko_missing_osm_lines_processor(self):
+        with pytest.raises(
+            ValueError,
+            match="osm_lines_processor argument is required to fetch bus lines for mapping stops to lines",
+        ):
+            OSMBusStopsProcessor.pre_process({})
+
+    def test_pre_process_ko_osm_lines_processor_not_a_class(self):
+        with pytest.raises(
+            ValueError, match="osm_lines_processor argument must be a type, got <class 'str'>"
+        ):
+            OSMBusStopsProcessor.pre_process({}, osm_lines_processor="not_a_processor")
+
+    def test_pre_process_ko_osm_lines_processor_not_a_subclass(self):
+        with pytest.raises(
+            ValueError,
+            match="osm_lines_processor argument must be a subclass of OSMBusLinesProcessor, got <class 'type'>",
+        ):
+            OSMBusStopsProcessor.pre_process({}, osm_lines_processor=OSMBusStopsProcessor)
+
+    def test_pre_process_ko_bad_osm_lines_processor_area(self):
+        with pytest.raises(
+            ValueError,
+            match="osm_lines_processor area 'Isère' does not match current processor area 'None'",
+        ):
+            OSMBusStopsProcessor.pre_process({}, osm_lines_processor=IsereOSMBusLinesProcessor)
+
     def test_pre_process_ko_bad_type(
         self, caplog: pytest.LogCaptureFixture, fetch_bus_lines_mocker: MockerFixture
     ):
@@ -359,7 +391,9 @@ class TestOSMBusStopsProcessorPreProcess:
             "    For further information visit https://errors.pydantic.dev/2.12/v/int_parsing"
         )
         latest_expected_log_message = "No valid bus stops found in the data."
-        result = OSMBusStopsProcessor.pre_process(input_content)
+        result = IsereOSMBusStopsProcessor.pre_process(
+            input_content, osm_lines_processor=IsereOSMBusLinesProcessor
+        )
         pd.testing.assert_frame_equal(result, expected)
         assert caplog.records[-1].message == latest_expected_log_message
         assert caplog.records[-2].message == expected_log_message
@@ -382,7 +416,9 @@ class TestOSMBusStopsProcessorPreProcess:
             ],
             geometry="geometry",
         )
-        result = OSMBusStopsProcessor.pre_process(input_content)
+        result = IsereOSMBusStopsProcessor.pre_process(
+            input_content, osm_lines_processor=IsereOSMBusLinesProcessor
+        )
         pd.testing.assert_frame_equal(result, expected)
 
     def test_pre_process_ok_one_element(self, fetch_bus_lines_mocker: MockerFixture):
@@ -419,7 +455,9 @@ class TestOSMBusStopsProcessorPreProcess:
             ],
             geometry="geometry",
         )
-        result = OSMBusStopsProcessor.pre_process(input_content)
+        result = IsereOSMBusStopsProcessor.pre_process(
+            input_content, osm_lines_processor=IsereOSMBusLinesProcessor
+        )
         pd.testing.assert_frame_equal(result, expected)
 
     def test_pre_process_ok_multiple_elements(self, fetch_bus_lines_mocker: MockerFixture):
@@ -491,5 +529,7 @@ class TestOSMBusStopsProcessorPreProcess:
             ],
             geometry="geometry",
         )
-        result = OSMBusStopsProcessor.pre_process(input_content)
+        result = IsereOSMBusStopsProcessor.pre_process(
+            input_content, osm_lines_processor=IsereOSMBusLinesProcessor
+        )
         pd.testing.assert_frame_equal(result, expected)

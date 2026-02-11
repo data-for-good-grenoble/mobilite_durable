@@ -37,6 +37,7 @@ class ProcessorMixin:
         fetch_api_kwargs: dict | None = None,
         fetch_input_kwargs: dict | None = None,
         fetch_output_kwargs: dict | None = None,
+        preprocess_kwargs: dict | None = None,
         save_kwargs: dict | None = None,
     ) -> None:
         content = cls.fetch(
@@ -44,6 +45,7 @@ class ProcessorMixin:
             fetch_api_kwargs=fetch_api_kwargs,
             fetch_input_kwargs=fetch_input_kwargs,
             fetch_output_kwargs=fetch_output_kwargs,
+            preprocess_kwargs=preprocess_kwargs,
             save_kwargs=save_kwargs,
         )
         if content is None:
@@ -56,6 +58,7 @@ class ProcessorMixin:
         fetch_api_kwargs: dict | None = None,
         fetch_input_kwargs: dict | None = None,
         fetch_output_kwargs: dict | None = None,
+        preprocess_kwargs: dict | None = None,
         save_kwargs: dict | None = None,
     ) -> Any | None:
         """
@@ -70,6 +73,7 @@ class ProcessorMixin:
         fetch_api_kwargs = fetch_api_kwargs or dict()
         fetch_input_kwargs = fetch_input_kwargs or dict()
         fetch_output_kwargs = fetch_output_kwargs or dict()
+        preprocess_kwargs = preprocess_kwargs or dict()
         save_kwargs = save_kwargs or dict()
 
         try:
@@ -77,6 +81,7 @@ class ProcessorMixin:
                 fetch_api_kwargs,
                 fetch_input_kwargs,
                 fetch_output_kwargs,
+                preprocess_kwargs,
                 save_kwargs,
                 reload_pipeline=reload_pipeline,
                 save_input_file=fetch_input_kwargs.get("save_input_file", True),
@@ -100,6 +105,7 @@ class ProcessorMixin:
         fetch_api_kwargs: dict,
         fetch_input_kwargs: dict,
         fetch_output_kwargs: dict,
+        preprocess_kwargs: dict,
         save_kwargs: dict,
         *,
         reload_pipeline: bool,
@@ -117,7 +123,7 @@ class ProcessorMixin:
                 reload_pipeline=reload_pipeline,
                 save_input_file=save_input_file,
             )
-            preprocessed_data = cls.pre_process(api_content)
+            preprocessed_data = cls.pre_process(api_content, **preprocess_kwargs)
             if save_output_file and output_file:
                 output_file.parent.mkdir(parents=True, exist_ok=True)
                 cls.save(preprocessed_data, output_file, **save_kwargs)
