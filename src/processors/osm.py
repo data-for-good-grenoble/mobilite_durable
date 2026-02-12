@@ -6,6 +6,7 @@ Author: Nicolas Grosjean
 
 import json
 import logging
+from abc import abstractmethod
 from pathlib import Path
 
 import geopandas as gpd
@@ -13,6 +14,7 @@ import pandas as pd
 from pydantic import ValidationError
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
+from slugify import slugify
 
 from src.api.overpass import OverpassAPI
 from src.models.bus_line import BusLine
@@ -33,9 +35,6 @@ class AbstractOSMProcessor(ProcessorMixin):
     # API declaration and technical limitations
     api_class: type[OverpassAPI] = OverpassAPI
     api_timeout = 600  # seconds
-
-    # Geographical delimitation
-    area = "Isère"
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs) -> dict | pd.DataFrame:
@@ -66,16 +65,33 @@ class AbstractOSMProcessor(ProcessorMixin):
         else:
             raise ValueError(f"Unsupported file format: {path.suffix}")
 
+    @staticmethod
+    @abstractmethod
+    def get_area() -> str:
+        """Return the area name to query in Overpass API"""
+
 
 class OSMBusStopsProcessor(AbstractOSMProcessor):
-    input_file = AbstractOSMProcessor.input_dir / "raw_bus_stops_isere.geojson"
-    output_file = AbstractOSMProcessor.output_dir / "bus_stops_isere.parquet"
+    @classmethod
+    def get_input_file(cls) -> Path | None:
+        return (
+            AbstractOSMProcessor.input_dir / f"raw_bus_stops_{slugify(cls.get_area())}.geojson"
+        )
+
+    @classmethod
+    def get_output_file(cls) -> Path | None:
+        return AbstractOSMProcessor.output_dir / f"bus_stops_{slugify(cls.get_area())}.parquet"
+
+    @classmethod
+    @abstractmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        """Get the corresponding OSM bus lines processor class to fetch the mapping of stops to lines when processing stops"""
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
         query = f"""
         [out:json][timeout:{cls.api_timeout}];
-        area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
+        area["name"="{cls.get_area()}"]["boundary"="administrative"]->.searchArea;
         node["highway"="bus_stop"](area.searchArea);
         out geom;
         """
@@ -84,8 +100,21 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
     @classmethod
     def pre_process(cls, content: dict, **kwargs) -> gpd.GeoDataFrame:
         # Create a dict mapping stop OSM IDs to the list of line OSM IDs containing them
-        logger.info("Fetching bus lines to map stops to lines")
-        lines_df: pd.DataFrame = OSMBusLinesProcessor.fetch(reload_pipeline=False)
+        logger.info(f"Fetching bus lines to map stops to lines for area {cls.get_area()}")
+        osm_lines_processor = cls.get_osm_lines_processor()
+        try:
+            is_osm_bus_lines_processor = issubclass(osm_lines_processor, OSMBusLinesProcessor)
+        except TypeError:
+            err_msg = (
+                f"osm_lines_processor argument must be a type, got {type(osm_lines_processor)}"
+            )
+            logger.error(err_msg)
+            raise ValueError(err_msg) from None
+        if not is_osm_bus_lines_processor:
+            err_msg = f"osm_lines_processor argument must be a subclass of OSMBusLinesProcessor, got {type(osm_lines_processor)}"
+            logger.error(err_msg)
+            raise ValueError(err_msg)
+        lines_df: pd.DataFrame = osm_lines_processor.fetch(reload_pipeline=False)
         osm_stop_to_line_ids = {}
         for _, row in lines_df.iterrows():
             line_osm_id = row["osm_id"]
@@ -153,27 +182,38 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
 
 
 class OSMBusLinesProcessor(AbstractOSMProcessor):
-    input_file = AbstractOSMProcessor.input_dir / "raw_bus_lines_isere.json"
-    output_file = AbstractOSMProcessor.output_dir / "bus_lines_isere.parquet"
+    @classmethod
+    def get_input_file(cls) -> Path | None:
+        return (
+            AbstractOSMProcessor.input_dir / f"raw_bus_lines_{slugify(cls.get_area())}.geojson"
+        )
+
+    @classmethod
+    def get_output_file(cls) -> Path | None:
+        return AbstractOSMProcessor.output_dir / f"bus_lines_{slugify(cls.get_area())}.parquet"
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
         fetch_geometry = kwargs.pop("fetch_geometry", False)
         if fetch_geometry:
-            logger.info("Fetching bus lines with geometry from Overpass API")
+            logger.info(
+                f"Fetching bus lines with geometry from Overpass API for area {cls.get_area()}"
+            )
             query = f"""
             [out:json][timeout:{cls.api_timeout}];
-            area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
+            area["name"="{cls.get_area()}"]["boundary"="administrative"]->.searchArea;
             relation["type"="route"]["route"="bus"](area.searchArea)->.busRoutes;
             .busRoutes out body;
             (way(r.busRoutes); node(w););
             out skel qt;
             """
         else:
-            logger.info("Fetching bus lines without geometry from Overpass API")
+            logger.info(
+                f"Fetching bus lines without geometry from Overpass API for area {cls.get_area()}"
+            )
             query = f"""
             [out:json][timeout:{cls.api_timeout}];
-            area["name"="{cls.area}"]["boundary"="administrative"]->.searchArea;
+            area["name"="{cls.get_area()}"]["boundary"="administrative"]->.searchArea;
             relation["type"="route"]["route"="bus"](area.searchArea);
             out;
             """
@@ -262,21 +302,87 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
             return super().fetch_from_file(path, **kwargs)
 
 
+class IsereOSMBusStopsProcessor(OSMBusStopsProcessor):
+    @staticmethod
+    def get_area() -> str:
+        return "Isère"
+
+    @classmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        return IsereOSMBusLinesProcessor
+
+
+class IsereOSMBusLinesProcessor(OSMBusLinesProcessor):
+    @staticmethod
+    def get_area() -> str:
+        return "Isère"
+
+
+class AURAOSMBusStopsProcessor(OSMBusStopsProcessor):
+    @staticmethod
+    def get_area() -> str:
+        return "Auvergne-Rhône-Alpes"
+
+    @classmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        return AURAOSMBusLinesProcessor
+
+
+class AURAOSMBusLinesProcessor(OSMBusLinesProcessor):
+    @staticmethod
+    def get_area() -> str:
+        return "Auvergne-Rhône-Alpes"
+
+
+class FranceOSMBusStopsProcessor(OSMBusStopsProcessor):
+    @staticmethod
+    def get_area() -> str:
+        return "France"
+
+    @classmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        return FranceOSMBusLinesProcessor
+
+
+class FranceOSMBusLinesProcessor(OSMBusLinesProcessor):
+    @staticmethod
+    def get_area() -> str:
+        return "France"
+
+
 def main(**kwargs):
     reload_pipeline = True
     # Process lines without geometry first to get the mapping of stops to lines when processing stops
     logger.info("Processing OSM bus lines without geometry")
-    OSMBusLinesProcessor.run(reload_pipeline)
+    IsereOSMBusLinesProcessor.run(reload_pipeline)
+    AURAOSMBusLinesProcessor.run(reload_pipeline)
+    # FranceOSMBusLinesProcessor.run(reload_pipeline)
     logger.info("Processing OSM bus stops")
-    OSMBusStopsProcessor.run(reload_pipeline)
+    IsereOSMBusStopsProcessor.run(reload_pipeline)
+    AURAOSMBusStopsProcessor.run(reload_pipeline)
+    # FranceOSMBusStopsProcessor.run(reload_pipeline)
     logger.info("Processing OSM bus lines with geometry")
-    OSMBusLinesProcessor.run(
+    IsereOSMBusLinesProcessor.run(
         reload_pipeline,
         fetch_api_kwargs={"fetch_geometry": True},
         fetch_input_kwargs={"fetch_geometry": True},
         fetch_output_kwargs={"fetch_geometry": True},
         save_kwargs={"save_geometry": True},
     )
+    AURAOSMBusLinesProcessor.run(
+        reload_pipeline,
+        fetch_api_kwargs={"fetch_geometry": True},
+        fetch_input_kwargs={"fetch_geometry": True},
+        fetch_output_kwargs={"fetch_geometry": True},
+        save_kwargs={"save_geometry": True},
+    )
+    # FranceOSMBusLinesProcessor.run(
+    #     reload_pipeline,
+    #     fetch_api_kwargs={"fetch_geometry": True},
+    #     fetch_input_kwargs={"fetch_geometry": True},
+    #     fetch_output_kwargs={"fetch_geometry": True},
+    #     save_kwargs={"save_geometry": True},
+    # )
 
 
 if __name__ == "__main__":
