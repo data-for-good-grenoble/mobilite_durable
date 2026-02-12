@@ -80,9 +80,9 @@ class C2cItiProcessor(ProcessorMixin):
 class C2CBusStopsProcessor(ProcessorMixin):
     # Define paths
     input_dir = DATA_FOLDER / "C2C"
-    input_file = input_dir / "UTF-8dump-c2corg-202505050900.sql.zip"
+    input_file = input_dir / "c2corg-anonymized.2025-12-10.sql"
     output_dir = input_dir
-    output_file = output_dir / "bus_stops_isere.parquet"
+    output_file = output_dir / "bus_stops.parquet"
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs) -> list[dict] | gpd.GeoDataFrame:
@@ -152,16 +152,25 @@ class C2CBusStopsProcessor(ProcessorMixin):
     def _fetch_from_sql_file(cls) -> list[dict]:
         """Parse SQL dump to extract bus stop data into a DataFrame.
 
-        Author: Laurent Sorba"""
-        sql_filename_inside_zip = "dump-c2corg-202505050900.sql"
-        with zipfile.ZipFile(cls.input_file, "r") as zip_ref:
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                # Extract SQL file to temporary directory
-                zip_ref.extract(sql_filename_inside_zip, tmp_dir)
-                sql_file_path = Path(tmp_dir) / sql_filename_inside_zip
-                stop_areas = cls._parse_sql_dump(sql_file_path)
-                logger.info(f"Loaded {len(stop_areas)} bus stop areas from SQL dump")
-                return stop_areas
+        Author: Laurent Sorba and Nicolas Grosjean"""
+        if cls.input_file is None or not cls.input_file.exists():
+            raise FileNotFoundError(f"Input file not found: {cls.input_file}")
+        elif cls.input_file.suffix == ".zip":
+            sql_filename_inside_zip = "dump-c2corg-202505050900.sql"
+            with zipfile.ZipFile(cls.input_file, "r") as zip_ref:
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    # Extract SQL file to temporary directory
+                    zip_ref.extract(sql_filename_inside_zip, tmp_dir)
+                    sql_file_path = Path(tmp_dir) / sql_filename_inside_zip
+                    stop_areas = cls._parse_sql_dump(sql_file_path)
+                    logger.info(f"Loaded {len(stop_areas)} bus stop areas from SQL dump")
+                    return stop_areas
+        elif cls.input_file.suffix == ".sql":
+            stop_areas = cls._parse_sql_dump(cls.input_file)
+            logger.info(f"Loaded {len(stop_areas)} bus stop areas from SQL dump")
+            return stop_areas
+        else:
+            raise ValueError(f"Unsupported file format: {cls.input_file.suffix}")
 
     @classmethod
     def _parse_sql_dump(cls, sql_file: Path) -> list[dict]:
@@ -300,7 +309,7 @@ class C2CBusStopsProcessor(ProcessorMixin):
 
 
 def main(**kwargs):
-    reload_pipeline = False  # TODO: Put True when no more buggued
+    reload_pipeline = True
     logger.info("Processing C2C bus stops")
     C2CBusStopsProcessor.run(reload_pipeline)
 

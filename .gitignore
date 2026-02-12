@@ -178,6 +178,8 @@ errors.jsonl
 errors.log
 src/data/**/*_output.*
 src/data/**/raw_*
+src/data/C2C/drivers/
+src/data/C2C/schema_doc/
 .vscode
 !src/openrouteservice/ors-docker/
 src/openrouteservice/ors-docker/*
