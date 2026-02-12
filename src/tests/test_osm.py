@@ -322,32 +322,28 @@ class TestOSMBusStopsProcessorPreProcess:
     Author: Nicolas Grosjean
     """
 
-    def test_pre_process_ko_missing_osm_lines_processor(self):
-        with pytest.raises(
-            ValueError,
-            match="osm_lines_processor argument is required to fetch bus lines for mapping stops to lines",
-        ):
-            OSMBusStopsProcessor.pre_process({})
-
     def test_pre_process_ko_osm_lines_processor_not_a_class(self):
+        class InvalidOSMBusStopsProcessor(OSMBusStopsProcessor):
+            @classmethod
+            def get_osm_lines_processor(cls):
+                return "not_a_processor"
+
         with pytest.raises(
             ValueError, match="osm_lines_processor argument must be a type, got <class 'str'>"
         ):
-            OSMBusStopsProcessor.pre_process({}, osm_lines_processor="not_a_processor")
+            InvalidOSMBusStopsProcessor.pre_process({})
 
     def test_pre_process_ko_osm_lines_processor_not_a_subclass(self):
+        class InvalidOSMBusStopsProcessor(OSMBusStopsProcessor):
+            @classmethod
+            def get_osm_lines_processor(cls):
+                return OSMBusStopsProcessor
+
         with pytest.raises(
             ValueError,
             match="osm_lines_processor argument must be a subclass of OSMBusLinesProcessor, got <class 'type'>",
         ):
-            OSMBusStopsProcessor.pre_process({}, osm_lines_processor=OSMBusStopsProcessor)
-
-    def test_pre_process_ko_bad_osm_lines_processor_area(self):
-        with pytest.raises(
-            ValueError,
-            match="osm_lines_processor area 'Isère' does not match current processor area 'None'",
-        ):
-            OSMBusStopsProcessor.pre_process({}, osm_lines_processor=IsereOSMBusLinesProcessor)
+            InvalidOSMBusStopsProcessor.pre_process({})
 
     def test_pre_process_ko_bad_type(
         self, caplog: pytest.LogCaptureFixture, fetch_bus_lines_mocker: MockerFixture

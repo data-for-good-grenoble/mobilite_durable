@@ -83,6 +83,11 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
         return AbstractOSMProcessor.output_dir / f"bus_stops_{slugify(cls.get_area())}.parquet"
 
     @classmethod
+    @abstractmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        """Get the corresponding OSM bus lines processor class to fetch the mapping of stops to lines when processing stops"""
+
+    @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
         query = f"""
         [out:json][timeout:{cls.api_timeout}];
@@ -96,11 +101,7 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
     def pre_process(cls, content: dict, **kwargs) -> gpd.GeoDataFrame:
         # Create a dict mapping stop OSM IDs to the list of line OSM IDs containing them
         logger.info(f"Fetching bus lines to map stops to lines for area {cls.get_area()}")
-        osm_lines_processor = kwargs.pop("osm_lines_processor", None)
-        if osm_lines_processor is None:
-            err_msg = "osm_lines_processor argument is required to fetch bus lines for mapping stops to lines"
-            logger.error(err_msg)
-            raise ValueError(err_msg)
+        osm_lines_processor = cls.get_osm_lines_processor()
         try:
             is_osm_bus_lines_processor = issubclass(osm_lines_processor, OSMBusLinesProcessor)
         except TypeError:
@@ -108,13 +109,9 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
                 f"osm_lines_processor argument must be a type, got {type(osm_lines_processor)}"
             )
             logger.error(err_msg)
-            raise ValueError(err_msg)
+            raise ValueError(err_msg) from None
         if not is_osm_bus_lines_processor:
             err_msg = f"osm_lines_processor argument must be a subclass of OSMBusLinesProcessor, got {type(osm_lines_processor)}"
-            logger.error(err_msg)
-            raise ValueError(err_msg)
-        if osm_lines_processor.get_area() != cls.get_area():
-            err_msg = f"osm_lines_processor area '{osm_lines_processor.get_area()}' does not match current processor area '{cls.get_area()}'"
             logger.error(err_msg)
             raise ValueError(err_msg)
         lines_df: pd.DataFrame = osm_lines_processor.fetch(reload_pipeline=False)
@@ -310,6 +307,10 @@ class IsereOSMBusStopsProcessor(OSMBusStopsProcessor):
     def get_area() -> str:
         return "Isère"
 
+    @classmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        return IsereOSMBusLinesProcessor
+
 
 class IsereOSMBusLinesProcessor(OSMBusLinesProcessor):
     @staticmethod
@@ -322,6 +323,10 @@ class AURAOSMBusStopsProcessor(OSMBusStopsProcessor):
     def get_area() -> str:
         return "Auvergne-Rhône-Alpes"
 
+    @classmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        return AURAOSMBusLinesProcessor
+
 
 class AURAOSMBusLinesProcessor(OSMBusLinesProcessor):
     @staticmethod
@@ -333,6 +338,10 @@ class FranceOSMBusStopsProcessor(OSMBusStopsProcessor):
     @staticmethod
     def get_area() -> str:
         return "France"
+
+    @classmethod
+    def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
+        return FranceOSMBusLinesProcessor
 
 
 class FranceOSMBusLinesProcessor(OSMBusLinesProcessor):
@@ -349,15 +358,9 @@ def main(**kwargs):
     AURAOSMBusLinesProcessor.run(reload_pipeline)
     # FranceOSMBusLinesProcessor.run(reload_pipeline)
     logger.info("Processing OSM bus stops")
-    IsereOSMBusStopsProcessor.run(
-        reload_pipeline, preprocess_kwargs={"osm_lines_processor": IsereOSMBusLinesProcessor}
-    )
-    AURAOSMBusStopsProcessor.run(
-        reload_pipeline, preprocess_kwargs={"osm_lines_processor": AURAOSMBusLinesProcessor}
-    )
-    # FranceOSMBusStopsProcessor.run(
-    #     reload_pipeline, preprocess_kwargs={"osm_lines_processor": FranceOSMBusLinesProcessor}
-    # )
+    IsereOSMBusStopsProcessor.run(reload_pipeline)
+    AURAOSMBusStopsProcessor.run(reload_pipeline)
+    # FranceOSMBusStopsProcessor.run(reload_pipeline)
     logger.info("Processing OSM bus lines with geometry")
     IsereOSMBusLinesProcessor.run(
         reload_pipeline,
