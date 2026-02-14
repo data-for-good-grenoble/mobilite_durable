@@ -11,7 +11,8 @@ Remarque selon vos versions, il faut remplacer `docker-compose` par `docker comp
 ## Télécharger (ou mettre à jour) les données OSM
 
 ```sh
-wget https://download.geofabrik.de/europe/france/rhone-alpes-latest.osm.pbf ors-docker/files
+wget https://download.geofabrik.de/europe/france/rhone-alpes-latest.osm.pbf
+mv rhone-alpes-latest.osm.pbf ors-docker/files/
 ```
 
 D'autres fichiers de données peuvent être trouvés sur le site [Geofabrik](https://download.geofabrik.de/).

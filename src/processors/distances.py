@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from src.api.openrouteservice import OpenRouteServiceAPI
 from src.processors.c2c import C2CBusStopsProcessor
-from src.processors.osm import OSMBusStopsProcessor
+from src.processors.osm import AURAOSMBusStopsProcessor
 from src.settings import DATA_FOLDER, EPSG_WGS84
 from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
@@ -34,8 +34,8 @@ class DistancesProcessor(ProcessorMixin):
     # API declaration
     api_class: type[OpenRouteServiceAPI] = OpenRouteServiceAPI
 
-    # Activity delimitation
-    area_code = "38"
+    # Data delimitation
+    area_codes = ["38", "73", "74"]  # Isère, Savoie, Haute-Savoie
 
     # Threshold to not compute distance between too far points (in meters)
     max_distance_threshold = 5000
@@ -56,12 +56,23 @@ class DistancesProcessor(ProcessorMixin):
     def fetch_from_api(cls, **kwargs) -> pd.DataFrame:
         keep_old_distances = kwargs.pop("keep_old_distances", False)
 
+        # Load department limits to filter data in the area of interest
+        area_gdf = gpd.read_file(
+            DATA_FOLDER / "transportdatagouv/contour-des-departements.geojson"
+        )
+
         # Get bus stops and activities in the area
-        area_bus_stops_gdf = cls._get_bus_stops().rename(
+        area_bus_stops_gdf = cls._get_bus_stops(area_gdf).rename(
             columns={"geometry": "bus_stop_geometry"}
         )
-        area_activity_gdf = cls._get_area_activities().rename(
+        logger.info(
+            f"Number of bus stops in the {len(cls.area_codes)} areas: {len(area_bus_stops_gdf)}"
+        )
+        area_activity_gdf = cls._get_area_activities(area_gdf).rename(
             columns={"geometry": "activity_geometry"}
+        )
+        logger.info(
+            f"Number of activities in the {len(cls.area_codes)} areas: {len(area_activity_gdf)}"
         )
 
         # Compute cross product of bus stops and activities
@@ -69,9 +80,15 @@ class DistancesProcessor(ProcessorMixin):
             area_activity_gdf.reset_index(drop=True),
             how="cross",
         )
+        logger.info(
+            f"Number of bus stop - activity pairs to compute distances for: {len(cross_df)}"
+        )
 
         # Merge with old distances to avoid recomputing them
         if keep_old_distances and cls.output_file is not None and cls.output_file.exists():
+            logger.info(
+                f"Loading old distances from {cls.output_file} to avoid recomputation..."
+            )
             old_distances_df = cls.fetch_from_file(cls.output_file)
             # Keep NaN distances in the old distances dataframe be setting them to a temporary negative value
             # before the merge, then set them back to NaN after the merge
@@ -92,6 +109,7 @@ class DistancesProcessor(ProcessorMixin):
             cross_df["distance_m"] = cross_df["distance_m"].replace(
                 temporary_negative_value, np.nan
             )
+            logger.info(f"Number of distances to compute: {(cross_df['distance_m'] < 0).sum()}")
 
         # Calculate distances using the API
         with concurrent.futures.ThreadPoolExecutor(max_workers=cls.max_workers) as executor:
@@ -122,10 +140,7 @@ class DistancesProcessor(ProcessorMixin):
         content.to_parquet(path)
 
     @classmethod
-    def _get_area_activities(cls) -> gpd.GeoDataFrame:
-        area_gdf = gpd.read_file(
-            DATA_FOLDER / "transportdatagouv/contour-des-departements.geojson"
-        )
+    def _get_area_activities(cls, area_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         activity_gdf = gpd.read_parquet(DATA_FOLDER / "C2C/depart_topos_stops_isere.parquet")
         activity_gdf = activity_gdf.rename(
             columns={
@@ -137,7 +152,7 @@ class DistancesProcessor(ProcessorMixin):
         area_activity_df = (
             gpd.sjoin(
                 activity_gdf.to_crs(EPSG_WGS84),
-                area_gdf[area_gdf["code"] == cls.area_code].to_crs(EPSG_WGS84),
+                area_gdf[area_gdf["code"].isin(cls.area_codes)].to_crs(EPSG_WGS84),
             )
             .loc[:, ["Id wp"]]
             .drop_duplicates()
@@ -149,14 +164,25 @@ class DistancesProcessor(ProcessorMixin):
         return area_activity_gdf
 
     @classmethod
-    def _get_bus_stops(cls) -> gpd.GeoDataFrame:
+    def _get_bus_stops(cls, area_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         bus_stop_columns = cls.bus_stop_columns + ["geometry"]
-        # TODO Remove set_crs when new data were computed
-        osm_stops_gdf = OSMBusStopsProcessor.fetch(reload_pipeline=False).set_crs(EPSG_WGS84)[
-            bus_stop_columns
-        ]
+        osm_stops_gdf = AURAOSMBusStopsProcessor.fetch(reload_pipeline=False)[bus_stop_columns]
+        osm_stops_gdf = (
+            gpd.sjoin(
+                osm_stops_gdf,
+                area_gdf[area_gdf["code"].isin(cls.area_codes)].to_crs(EPSG_WGS84),
+            )
+            .loc[:, ["osm_id"]]
+            .drop_duplicates()
+            .merge(osm_stops_gdf, on="osm_id", how="inner")
+        )
         c2c_stops_gdf = C2CBusStopsProcessor.fetch(reload_pipeline=False)[bus_stop_columns]
-        tdg_stops_gdf = gpd.read_parquet(DATA_FOLDER / "transportdatagouv/stops_38.parquet")
+        tdg_stop_list = []
+        for area_code in cls.area_codes:
+            tdg_stop_list.append(
+                gpd.read_parquet(DATA_FOLDER / f"transportdatagouv/stops_{area_code}.parquet")
+            )
+        tdg_stops_gdf = pd.concat(tdg_stop_list, ignore_index=True)
         tdg_stops_gdf.columns = [
             "network_gtfs_id",
             "network",
