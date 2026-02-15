@@ -132,8 +132,7 @@ class DistancesProcessor(ProcessorMixin):
                 for future in concurrent.futures.as_completed(futures):
                     i = futures[future]
                     cross_df.at[i, "distance_m"] = future.result()
-        cross_df.update(cross_df)
-        return cross_df[cls.bus_stop_columns + ["Id wp", "distance_m"]]
+        return cross_df.loc[:, cls.bus_stop_columns + ["Id wp", "distance_m"]]
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs):
