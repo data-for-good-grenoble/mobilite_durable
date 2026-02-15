@@ -6,12 +6,12 @@ Author: Nicolas Grosjean
 
 import concurrent.futures
 import logging
+from math import cos, radians, sqrt
 from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyproj import Geod
 from tqdm import tqdm
 
 from src.api.openrouteservice import OpenRouteServiceAPI
@@ -40,17 +40,18 @@ class DistancesProcessor(ProcessorMixin):
     # Threshold to not compute distance between too far points (in meters)
     max_distance_threshold = 5000
 
+    # Margin for Euclidean approximation filtering (in meters)
+    # Euclidean distance is shorter than geodesic, so we add margin to avoid false negatives
+    euclidean_margin = 30
+
     # Size of the batch of distances computed by each thread
-    batch_size = 1000
+    batch_size = 10000
 
     # Maximum number of threads to use to compute distances
     max_workers = 10
 
     # Columns to keep to identify bus stops
     bus_stop_columns = ["osm_id", "gtfs_id", "navitia_id"]
-
-    # Geod object for distance calculations
-    geod = Geod(ellps="WGS84")
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> pd.DataFrame:
@@ -108,6 +109,9 @@ class DistancesProcessor(ProcessorMixin):
             cross_df["distance_m"] = cross_df["distance_m"].fillna(another_negative_value)
             cross_df["distance_m"] = cross_df["distance_m"].replace(
                 temporary_negative_value, np.nan
+            )
+            logger.info(
+                f"Number of already computed distances: {(pd.isna(cross_df['distance_m']) | (cross_df['distance_m'] > 0)).sum()}"
             )
             logger.info(f"Number of distances to compute: {(cross_df['distance_m'] < 0).sum()}")
 
@@ -207,15 +211,16 @@ class DistancesProcessor(ProcessorMixin):
         return cls._compute_distance(row)
 
     @classmethod
-    def _compute_distance(cls, row: pd.Series) -> float | None:
-        _, _, straight_distance = cls.geod.inv(
+    def _compute_distance(cls, row: pd.Series) -> float:
+        # Use fast Euclidean approximation with margin to filter distant points
+        straight_distance = cls._euclidean_distance(
             row["bus_stop_geometry"].x,
             row["bus_stop_geometry"].y,
             row["activity_geometry"].x,
             row["activity_geometry"].y,
         )
-        if straight_distance > cls.max_distance_threshold:
-            return None
+        if straight_distance > cls.max_distance_threshold + cls.euclidean_margin:
+            return np.nan
         start_coords = (
             row["bus_stop_geometry"].y,
             row["bus_stop_geometry"].x,
@@ -229,7 +234,17 @@ class DistancesProcessor(ProcessorMixin):
             return distance
         except Exception as e:
             logger.error(f"Error computing distance for row {row.name}: {e}")
-            return None
+            return np.nan
+
+    @classmethod
+    def _euclidean_distance(cls, lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+        """Calculate approximate distance using Euclidean formula.
+
+        Fast approximation for geographic distances. Accurate enough for small distances (<10km).
+        """
+        dlat = (lat2 - lat1) * 111320  # meters per degree latitude
+        dlon = (lon2 - lon1) * 111320 * cos(radians(lat1))  # meters per degree longitude
+        return sqrt(dlat**2 + dlon**2)
 
 
 def main(**kwargs):
