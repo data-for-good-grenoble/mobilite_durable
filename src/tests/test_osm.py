@@ -323,25 +323,34 @@ class TestOSMBusStopsProcessorPreProcess:
     """
 
     def test_pre_process_ko_osm_lines_processor_not_a_class(self):
+        class FakeLinesProcessor:
+            def get_area(self) -> int:
+                return 42
+
         class InvalidOSMBusStopsProcessor(OSMBusStopsProcessor):
             @classmethod
             def get_osm_lines_processor(cls):
-                return "not_a_processor"
+                return FakeLinesProcessor()
 
         with pytest.raises(
-            ValueError, match="osm_lines_processor argument must be a type, got <class 'str'>"
+            ValueError, match="osm_lines_processor argument must be a type, got"
         ):
             InvalidOSMBusStopsProcessor.pre_process({})
 
     def test_pre_process_ko_osm_lines_processor_not_a_subclass(self):
+        class FakeLinesProcessor:
+            @classmethod
+            def get_area(cls) -> int:
+                return 42
+
         class InvalidOSMBusStopsProcessor(OSMBusStopsProcessor):
             @classmethod
             def get_osm_lines_processor(cls):
-                return OSMBusStopsProcessor
+                return FakeLinesProcessor
 
         with pytest.raises(
             ValueError,
-            match="osm_lines_processor argument must be a subclass of OSMBusLinesProcessor, got <class 'type'>",
+            match="osm_lines_processor argument must be a subclass of OSMBusLinesProcessor, got",
         ):
             InvalidOSMBusStopsProcessor.pre_process({})
 

@@ -65,9 +65,9 @@ class AbstractOSMProcessor(ProcessorMixin):
         else:
             raise ValueError(f"Unsupported file format: {path.suffix}")
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_area() -> str:
+    def get_area(cls) -> str:
         """Return the area name to query in Overpass API"""
 
 
@@ -86,6 +86,10 @@ class OSMBusStopsProcessor(AbstractOSMProcessor):
     @abstractmethod
     def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
         """Get the corresponding OSM bus lines processor class to fetch the mapping of stops to lines when processing stops"""
+
+    @classmethod
+    def get_area(cls):
+        return cls.get_osm_lines_processor().get_area()
 
     @classmethod
     def fetch_from_api(cls, **kwargs) -> dict | None:
@@ -303,50 +307,38 @@ class OSMBusLinesProcessor(AbstractOSMProcessor):
 
 
 class IsereOSMBusStopsProcessor(OSMBusStopsProcessor):
-    @staticmethod
-    def get_area() -> str:
-        return "Isère"
-
     @classmethod
     def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
         return IsereOSMBusLinesProcessor
 
 
 class IsereOSMBusLinesProcessor(OSMBusLinesProcessor):
-    @staticmethod
-    def get_area() -> str:
+    @classmethod
+    def get_area(cls) -> str:
         return "Isère"
 
 
 class AURAOSMBusStopsProcessor(OSMBusStopsProcessor):
-    @staticmethod
-    def get_area() -> str:
-        return "Auvergne-Rhône-Alpes"
-
     @classmethod
     def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
         return AURAOSMBusLinesProcessor
 
 
 class AURAOSMBusLinesProcessor(OSMBusLinesProcessor):
-    @staticmethod
-    def get_area() -> str:
+    @classmethod
+    def get_area(cls) -> str:
         return "Auvergne-Rhône-Alpes"
 
 
 class FranceOSMBusStopsProcessor(OSMBusStopsProcessor):
-    @staticmethod
-    def get_area() -> str:
-        return "France"
-
     @classmethod
     def get_osm_lines_processor(cls) -> type[AbstractOSMProcessor]:
         return FranceOSMBusLinesProcessor
 
 
 class FranceOSMBusLinesProcessor(OSMBusLinesProcessor):
-    @staticmethod
-    def get_area() -> str:
+    @classmethod
+    def get_area(cls) -> str:
         return "France"
 
 
