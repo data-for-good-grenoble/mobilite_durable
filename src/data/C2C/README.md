@@ -32,3 +32,45 @@ docker stop c2cdb
 # Clean volume
 docker volume prune
 ```
+
+# Générer une documentation du schéma
+
+Les commandes suivantes permettent de générer la documentation des schémas de BDD  qui sont dans le zip `c2corg-anonymized.2025-12-10.schema_doc.zip`.
+
+```bash
+# Set the env variables (see above)
+
+# Install a postgres driver
+mkdir $C2C_DATA_PATH/drivers
+wget https://jdbc.postgresql.org/download/postgresql-42.7.8.jar -O $C2C_DATA_PATH/drivers/postgresql.jar
+
+# Create directory where documentation will be stored
+mkdir $C2C_DATA_PATH/schema_doc
+chmod +777 $C2C_DATA_PATH/schema_doc
+
+# Deploy Postgres schema in a container
+docker network create schemaspy-net
+docker run --rm --name postgres_schema -e POSTGRES_PASSWORD=password --network schemaspy-net -d docker.io/postgis/postgis:17-3.6-alpine
+docker exec -i postgres_schema psql -U postgres < $C2C_DATA_PATH/$C2C_SCHEMA_DUMP_NAME
+
+# Run schemaspy
+docker run --rm \
+ -v $C2C_DATA_PATH/schema_doc:/output \
+ -v $C2C_DATA_PATH/drivers:/drivers \
+ --network schemaspy-net \
+ docker.io/schemaspy/schemaspy:latest \
+ -t pgsql \
+ -dp /drivers/postgresql.jar \
+ -host postgres_schema \
+ -port 5432 \
+ -db postgres \
+ -u postgres \
+ -p password \
+ -all
+
+ # Stop (and remove) postgres container
+docker stop postgres_schema
+
+# Clean volume
+docker volume prune
+```
