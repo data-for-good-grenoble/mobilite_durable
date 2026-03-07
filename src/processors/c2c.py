@@ -81,6 +81,7 @@ class C2CBusStopsProcessor(ProcessorMixin):
     # Define paths
     input_dir = DATA_FOLDER / "C2C"
     input_file = input_dir / "c2corg-anonymized.2025-12-10.sql"
+    sql_filename_inside_zip = "dump-c2corg-202505050900.sql"
     output_dir = input_dir
     output_file = output_dir / "bus_stops.parquet"
 
@@ -156,12 +157,11 @@ class C2CBusStopsProcessor(ProcessorMixin):
         if cls.input_file is None or not cls.input_file.exists():
             raise FileNotFoundError(f"Input file not found: {cls.input_file}")
         elif cls.input_file.suffix == ".zip":
-            sql_filename_inside_zip = "dump-c2corg-202505050900.sql"
             with zipfile.ZipFile(cls.input_file, "r") as zip_ref:
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     # Extract SQL file to temporary directory
-                    zip_ref.extract(sql_filename_inside_zip, tmp_dir)
-                    sql_file_path = Path(tmp_dir) / sql_filename_inside_zip
+                    zip_ref.extract(cls.sql_filename_inside_zip, tmp_dir)
+                    sql_file_path = Path(tmp_dir) / cls.sql_filename_inside_zip
                     stop_areas = cls._parse_sql_dump(sql_file_path)
                     logger.info(f"Loaded {len(stop_areas)} bus stop areas from SQL dump")
                     return stop_areas
