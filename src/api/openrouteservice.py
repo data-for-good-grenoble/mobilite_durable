@@ -12,8 +12,8 @@ class OpenRouteServiceAPI:
         Compute the walking distance between two coordinates using the openrouteservice API.
 
         Parameters:
-        start_coords (tuple): A tuple containing the latitude and longitude of the start point (lat, lon).
-        end_coords (tuple): A tuple containing the latitude and longitude of the end point (lat, lon).
+        start_coords (tuple): A tuple containing the latitude and longitude of the start point (lon, lat).
+        end_coords (tuple): A tuple containing the latitude and longitude of the end point (lon, lat).
 
         Returns:
         float: The walking distance in meters.
@@ -21,8 +21,8 @@ class OpenRouteServiceAPI:
 
         base_url = cls.API_URL + "/directions/foot-hiking"
         params = {
-            "start": f"{start_coords[1]},{start_coords[0]}",
-            "end": f"{end_coords[1]},{end_coords[0]}",
+            "start": f"{start_coords[0]},{start_coords[1]}",
+            "end": f"{end_coords[0]},{end_coords[1]}",
         }
 
         response = requests.get(base_url, params=params)

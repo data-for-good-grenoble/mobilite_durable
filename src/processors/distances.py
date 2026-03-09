@@ -170,6 +170,9 @@ class DistancesProcessor(ProcessorMixin):
     def _get_bus_stops(cls, area_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         bus_stop_columns = cls.bus_stop_columns + ["geometry"]
         osm_stops_gdf = AURAOSMBusStopsProcessor.fetch(reload_pipeline=False)[bus_stop_columns]
+        if osm_stops_gdf is None or osm_stops_gdf.empty:
+            err_msg = "No OSM bus stops found, please process AURA OSM bus stops first."
+            raise ValueError(err_msg)
         osm_stops_gdf = (
             gpd.sjoin(
                 osm_stops_gdf,
@@ -180,11 +183,16 @@ class DistancesProcessor(ProcessorMixin):
             .merge(osm_stops_gdf, on="osm_id", how="inner")
         )
         c2c_stops_gdf = C2CBusStopsProcessor.fetch(reload_pipeline=False)[bus_stop_columns]
+        if c2c_stops_gdf is None or c2c_stops_gdf.empty:
+            err_msg = "No C2C bus stops found, please process C2C bus stops first."
+            raise ValueError(err_msg)
         tdg_stop_list = []
         for area_code in cls.area_codes:
-            tdg_stop_list.append(
-                gpd.read_parquet(DATA_FOLDER / f"transportdatagouv/stops_{area_code}.parquet")
-            )
+            tdg_file = DATA_FOLDER / f"transportdatagouv/stops_{area_code}.parquet"
+            if not tdg_file.exists():
+                err_msg = f"No TransportDataGouv bus stops found for area code {area_code}, please process it first."
+                raise ValueError(err_msg)
+            tdg_stop_list.append(gpd.read_parquet(tdg_file))
         tdg_stops_gdf = pd.concat(tdg_stop_list, ignore_index=True)
         tdg_stops_gdf.columns = [
             "network_gtfs_id",
@@ -212,21 +220,21 @@ class DistancesProcessor(ProcessorMixin):
     @classmethod
     def _compute_distance(cls, row: pd.Series) -> float:
         # Use fast Euclidean approximation with margin to filter distant points
-        straight_distance = cls._euclidean_distance(
+        straight_distance = cls._square_euclidean_distance(
             row["bus_stop_geometry"].x,
             row["bus_stop_geometry"].y,
             row["activity_geometry"].x,
             row["activity_geometry"].y,
         )
-        if straight_distance > cls.max_distance_threshold + cls.euclidean_margin:
+        if straight_distance**2 > cls.max_distance_threshold + cls.euclidean_margin:
             return np.nan
         start_coords = (
-            row["bus_stop_geometry"].y,
             row["bus_stop_geometry"].x,
+            row["bus_stop_geometry"].y,
         )
         end_coords = (
-            row["activity_geometry"].y,
             row["activity_geometry"].x,
+            row["activity_geometry"].y,
         )
         try:
             distance = cls.api_class.compute_distance(start_coords, end_coords)
@@ -236,14 +244,16 @@ class DistancesProcessor(ProcessorMixin):
             return np.nan
 
     @classmethod
-    def _euclidean_distance(cls, lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+    def _square_euclidean_distance(
+        cls, lon1: float, lat1: float, lon2: float, lat2: float
+    ) -> float:
         """Calculate approximate distance using Euclidean formula.
 
         Fast approximation for geographic distances. Accurate enough for small distances (<10km).
         """
         dlat = (lat2 - lat1) * 111320  # meters per degree latitude
         dlon = (lon2 - lon1) * 111320 * cos(radians(lat1))  # meters per degree longitude
-        return sqrt(dlat**2 + dlon**2)
+        return dlat**2 + dlon**2
 
 
 def main(**kwargs):
