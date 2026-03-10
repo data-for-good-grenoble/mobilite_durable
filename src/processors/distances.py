@@ -6,17 +6,17 @@ Author: Nicolas Grosjean
 
 import concurrent.futures
 import logging
+from math import cos, radians, sqrt
 from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyproj import Geod
 from tqdm import tqdm
 
 from src.api.openrouteservice import OpenRouteServiceAPI
 from src.processors.c2c import C2CBusStopsProcessor
-from src.processors.osm import OSMBusStopsProcessor
+from src.processors.osm import AURAOSMBusStopsProcessor
 from src.settings import DATA_FOLDER, EPSG_WGS84
 from src.utils.logger import setup_logger
 from src.utils.processor_mixin import ProcessorMixin
@@ -34,14 +34,18 @@ class DistancesProcessor(ProcessorMixin):
     # API declaration
     api_class: type[OpenRouteServiceAPI] = OpenRouteServiceAPI
 
-    # Activity delimitation
-    area_code = "38"
+    # Data delimitation
+    area_codes = ["38", "73", "74"]  # Isère, Savoie, Haute-Savoie
 
     # Threshold to not compute distance between too far points (in meters)
     max_distance_threshold = 5000
 
+    # Margin for Euclidean approximation filtering (in meters)
+    # Euclidean distance is shorter than geodesic, so we add margin to avoid false negatives
+    euclidean_margin = 30
+
     # Size of the batch of distances computed by each thread
-    batch_size = 1000
+    batch_size = 10000
 
     # Maximum number of threads to use to compute distances
     max_workers = 10
@@ -49,19 +53,27 @@ class DistancesProcessor(ProcessorMixin):
     # Columns to keep to identify bus stops
     bus_stop_columns = ["osm_id", "gtfs_id", "navitia_id"]
 
-    # Geod object for distance calculations
-    geod = Geod(ellps="WGS84")
-
     @classmethod
     def fetch_from_api(cls, **kwargs) -> pd.DataFrame:
         keep_old_distances = kwargs.pop("keep_old_distances", False)
 
+        # Load department limits to filter data in the area of interest
+        area_gdf = gpd.read_file(
+            DATA_FOLDER / "transportdatagouv/contour-des-departements.geojson"
+        )
+
         # Get bus stops and activities in the area
-        area_bus_stops_gdf = cls._get_bus_stops().rename(
+        area_bus_stops_gdf = cls._get_bus_stops(area_gdf).rename(
             columns={"geometry": "bus_stop_geometry"}
         )
-        area_activity_gdf = cls._get_area_activities().rename(
+        logger.info(
+            f"Number of bus stops in the {len(cls.area_codes)} areas: {len(area_bus_stops_gdf)}"
+        )
+        area_activity_gdf = cls._get_area_activities(area_gdf).rename(
             columns={"geometry": "activity_geometry"}
+        )
+        logger.info(
+            f"Number of activities in the {len(cls.area_codes)} areas: {len(area_activity_gdf)}"
         )
 
         # Compute cross product of bus stops and activities
@@ -69,9 +81,15 @@ class DistancesProcessor(ProcessorMixin):
             area_activity_gdf.reset_index(drop=True),
             how="cross",
         )
+        logger.info(
+            f"Number of bus stop - activity pairs to compute distances for: {len(cross_df)}"
+        )
 
         # Merge with old distances to avoid recomputing them
         if keep_old_distances and cls.output_file is not None and cls.output_file.exists():
+            logger.info(
+                f"Loading old distances from {cls.output_file} to avoid recomputation..."
+            )
             old_distances_df = cls.fetch_from_file(cls.output_file)
             # Keep NaN distances in the old distances dataframe be setting them to a temporary negative value
             # before the merge, then set them back to NaN after the merge
@@ -92,6 +110,10 @@ class DistancesProcessor(ProcessorMixin):
             cross_df["distance_m"] = cross_df["distance_m"].replace(
                 temporary_negative_value, np.nan
             )
+            logger.info(
+                f"Number of already computed distances: {(pd.isna(cross_df['distance_m']) | (cross_df['distance_m'] > 0)).sum()}"
+            )
+            logger.info(f"Number of distances to compute: {(cross_df['distance_m'] < 0).sum()}")
 
         # Calculate distances using the API
         with concurrent.futures.ThreadPoolExecutor(max_workers=cls.max_workers) as executor:
@@ -110,8 +132,7 @@ class DistancesProcessor(ProcessorMixin):
                 for future in concurrent.futures.as_completed(futures):
                     i = futures[future]
                     cross_df.at[i, "distance_m"] = future.result()
-        cross_df.update(cross_df)
-        return cross_df[cls.bus_stop_columns + ["Id wp", "distance_m"]]
+        return cross_df.loc[:, cls.bus_stop_columns + ["Id wp", "distance_m"]]
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs):
@@ -122,10 +143,7 @@ class DistancesProcessor(ProcessorMixin):
         content.to_parquet(path)
 
     @classmethod
-    def _get_area_activities(cls) -> gpd.GeoDataFrame:
-        area_gdf = gpd.read_file(
-            DATA_FOLDER / "transportdatagouv/contour-des-departements.geojson"
-        )
+    def _get_area_activities(cls, area_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         activity_gdf = gpd.read_parquet(DATA_FOLDER / "C2C/depart_topos_stops_isere.parquet")
         activity_gdf = activity_gdf.rename(
             columns={
@@ -137,7 +155,7 @@ class DistancesProcessor(ProcessorMixin):
         area_activity_df = (
             gpd.sjoin(
                 activity_gdf.to_crs(EPSG_WGS84),
-                area_gdf[area_gdf["code"] == cls.area_code].to_crs(EPSG_WGS84),
+                area_gdf[area_gdf["code"].isin(cls.area_codes)].to_crs(EPSG_WGS84),
             )
             .loc[:, ["Id wp"]]
             .drop_duplicates()
@@ -149,14 +167,33 @@ class DistancesProcessor(ProcessorMixin):
         return area_activity_gdf
 
     @classmethod
-    def _get_bus_stops(cls) -> gpd.GeoDataFrame:
+    def _get_bus_stops(cls, area_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         bus_stop_columns = cls.bus_stop_columns + ["geometry"]
-        # TODO Remove set_crs when new data were computed
-        osm_stops_gdf = OSMBusStopsProcessor.fetch(reload_pipeline=False).set_crs(EPSG_WGS84)[
-            bus_stop_columns
-        ]
+        osm_stops_gdf = AURAOSMBusStopsProcessor.fetch(reload_pipeline=False)[bus_stop_columns]
+        if osm_stops_gdf is None or osm_stops_gdf.empty:
+            err_msg = "No OSM bus stops found, please process AURA OSM bus stops first."
+            raise ValueError(err_msg)
+        osm_stops_gdf = (
+            gpd.sjoin(
+                osm_stops_gdf,
+                area_gdf[area_gdf["code"].isin(cls.area_codes)].to_crs(EPSG_WGS84),
+            )
+            .loc[:, ["osm_id"]]
+            .drop_duplicates()
+            .merge(osm_stops_gdf, on="osm_id", how="inner")
+        )
         c2c_stops_gdf = C2CBusStopsProcessor.fetch(reload_pipeline=False)[bus_stop_columns]
-        tdg_stops_gdf = gpd.read_parquet(DATA_FOLDER / "transportdatagouv/stops_38.parquet")
+        if c2c_stops_gdf is None or c2c_stops_gdf.empty:
+            err_msg = "No C2C bus stops found, please process C2C bus stops first."
+            raise ValueError(err_msg)
+        tdg_stop_list = []
+        for area_code in cls.area_codes:
+            tdg_file = DATA_FOLDER / f"transportdatagouv/stops_{area_code}.parquet"
+            if not tdg_file.exists():
+                err_msg = f"No TransportDataGouv bus stops found for area code {area_code}, please process it first."
+                raise ValueError(err_msg)
+            tdg_stop_list.append(gpd.read_parquet(tdg_file))
+        tdg_stops_gdf = pd.concat(tdg_stop_list, ignore_index=True)
         tdg_stops_gdf.columns = [
             "network_gtfs_id",
             "network",
@@ -181,29 +218,42 @@ class DistancesProcessor(ProcessorMixin):
         return cls._compute_distance(row)
 
     @classmethod
-    def _compute_distance(cls, row: pd.Series) -> float | None:
-        _, _, straight_distance = cls.geod.inv(
+    def _compute_distance(cls, row: pd.Series) -> float:
+        # Use fast Euclidean approximation with margin to filter distant points
+        straight_distance = cls._square_euclidean_distance(
             row["bus_stop_geometry"].x,
             row["bus_stop_geometry"].y,
             row["activity_geometry"].x,
             row["activity_geometry"].y,
         )
-        if straight_distance > cls.max_distance_threshold:
-            return None
+        if straight_distance > (cls.max_distance_threshold + cls.euclidean_margin) ** 2:
+            return np.nan
         start_coords = (
-            row["bus_stop_geometry"].y,
             row["bus_stop_geometry"].x,
+            row["bus_stop_geometry"].y,
         )
         end_coords = (
-            row["activity_geometry"].y,
             row["activity_geometry"].x,
+            row["activity_geometry"].y,
         )
         try:
             distance = cls.api_class.compute_distance(start_coords, end_coords)
             return distance
         except Exception as e:
             logger.error(f"Error computing distance for row {row.name}: {e}")
-            return None
+            return np.nan
+
+    @classmethod
+    def _square_euclidean_distance(
+        cls, lon1: float, lat1: float, lon2: float, lat2: float
+    ) -> float:
+        """Calculate approximate distance using Euclidean formula.
+
+        Fast approximation for geographic distances. Accurate enough for small distances (<10km).
+        """
+        dlat = (lat2 - lat1) * 111320  # meters per degree latitude
+        dlon = (lon2 - lon1) * 111320 * cos(radians(lat1))  # meters per degree longitude
+        return dlat**2 + dlon**2
 
 
 def main(**kwargs):
