@@ -226,7 +226,7 @@ class DistancesProcessor(ProcessorMixin):
             row["activity_geometry"].x,
             row["activity_geometry"].y,
         )
-        if straight_distance**2 > cls.max_distance_threshold + cls.euclidean_margin:
+        if straight_distance > (cls.max_distance_threshold + cls.euclidean_margin)**2:
             return np.nan
         start_coords = (
             row["bus_stop_geometry"].x,
