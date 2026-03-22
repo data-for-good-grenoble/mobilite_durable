@@ -2,15 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict dgCt5Wiao4nhESbrgM0GjQgokAhHglngA7wNzWj88dF6NE1y2nTv3qvQeBkoCKc
-
 -- Dumped from database version 9.6.1
 -- Dumped by pg_dump version 9.6.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -35,22 +32,6 @@ CREATE SCHEMA guidebook;
 
 
 ALTER SCHEMA guidebook OWNER TO "www-data";
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
---
-
-CREATE SCHEMA public;
-
-
-ALTER SCHEMA public OWNER TO postgres;
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
---
-
-COMMENT ON SCHEMA public IS 'standard public schema';
-
 
 --
 -- Name: sympa; Type: SCHEMA; Schema: -; Owner: www-data
@@ -2218,6 +2199,8 @@ SET search_path = alembic, pg_catalog;
 
 SET default_tablespace = '';
 
+SET default_with_oids = false;
+
 --
 -- Name: alembic_version; Type: TABLE; Schema: alembic; Owner: www-data
 --
@@ -2325,7 +2308,7 @@ CREATE SEQUENCE association_log_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.association_log_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.association_log_id_seq OWNER TO "www-data";
 
 --
 -- Name: association_log_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2446,7 +2429,7 @@ CREATE SEQUENCE documents_archives_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_archives_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_archives_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_archives_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2467,7 +2450,7 @@ CREATE SEQUENCE documents_document_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_document_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_document_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_document_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2519,7 +2502,7 @@ CREATE SEQUENCE documents_geometries_archives_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_geometries_archives_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_geometries_archives_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_geometries_archives_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2576,7 +2559,7 @@ CREATE SEQUENCE documents_locales_archives_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_locales_archives_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_locales_archives_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_locales_archives_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2597,7 +2580,7 @@ CREATE SEQUENCE documents_locales_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_locales_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_locales_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_locales_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2647,7 +2630,7 @@ CREATE SEQUENCE documents_tags_log_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_tags_log_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_tags_log_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_tags_log_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2698,7 +2681,7 @@ CREATE SEQUENCE documents_versions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.documents_versions_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.documents_versions_id_seq OWNER TO "www-data";
 
 --
 -- Name: documents_versions_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2732,7 +2715,7 @@ CREATE SEQUENCE es_deleted_documents_document_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.es_deleted_documents_document_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.es_deleted_documents_document_id_seq OWNER TO "www-data";
 
 --
 -- Name: es_deleted_documents_document_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2767,7 +2750,7 @@ CREATE SEQUENCE es_deleted_locales_document_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.es_deleted_locales_document_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.es_deleted_locales_document_id_seq OWNER TO "www-data";
 
 --
 -- Name: es_deleted_locales_document_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2801,7 +2784,7 @@ CREATE SEQUENCE es_sync_status_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.es_sync_status_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.es_sync_status_id_seq OWNER TO "www-data";
 
 --
 -- Name: es_sync_status_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2846,7 +2829,7 @@ CREATE SEQUENCE feed_document_changes_change_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.feed_document_changes_change_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.feed_document_changes_change_id_seq OWNER TO "www-data";
 
 --
 -- Name: feed_document_changes_change_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -2906,7 +2889,7 @@ CREATE SEQUENCE history_metadata_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.history_metadata_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.history_metadata_id_seq OWNER TO "www-data";
 
 --
 -- Name: history_metadata_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -3278,7 +3261,7 @@ CREATE VIEW routes_for_outings AS
   GROUP BY associations.child_document_id;
 
 
-ALTER VIEW guidebook.routes_for_outings OWNER TO "www-data";
+ALTER TABLE guidebook.routes_for_outings OWNER TO "www-data";
 
 --
 -- Name: routes_locales; Type: TABLE; Schema: guidebook; Owner: www-data
@@ -3345,7 +3328,7 @@ CREATE SEQUENCE stopareas_stoparea_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.stopareas_stoparea_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.stopareas_stoparea_id_seq OWNER TO "www-data";
 
 --
 -- Name: stopareas_stoparea_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -3392,7 +3375,7 @@ CREATE VIEW users_for_outings AS
   GROUP BY associations.child_document_id;
 
 
-ALTER VIEW guidebook.users_for_outings OWNER TO "www-data";
+ALTER TABLE guidebook.users_for_outings OWNER TO "www-data";
 
 --
 -- Name: users_for_routes; Type: VIEW; Schema: guidebook; Owner: www-data
@@ -3405,7 +3388,7 @@ CREATE VIEW users_for_routes AS
   GROUP BY documents_tags.document_id;
 
 
-ALTER VIEW guidebook.users_for_routes OWNER TO "www-data";
+ALTER TABLE guidebook.users_for_routes OWNER TO "www-data";
 
 --
 -- Name: waypoints; Type: TABLE; Schema: guidebook; Owner: www-data
@@ -3567,7 +3550,7 @@ CREATE VIEW waypoints_for_outings AS
   GROUP BY waypoints_for_outings.outing_id;
 
 
-ALTER VIEW guidebook.waypoints_for_outings OWNER TO "www-data";
+ALTER TABLE guidebook.waypoints_for_outings OWNER TO "www-data";
 
 --
 -- Name: waypoints_for_routes; Type: VIEW; Schema: guidebook; Owner: www-data
@@ -3608,7 +3591,7 @@ CREATE VIEW waypoints_for_routes AS
   GROUP BY all_waypoints.route_id;
 
 
-ALTER VIEW guidebook.waypoints_for_routes OWNER TO "www-data";
+ALTER TABLE guidebook.waypoints_for_routes OWNER TO "www-data";
 
 --
 -- Name: waypoints_locales; Type: TABLE; Schema: guidebook; Owner: www-data
@@ -3664,7 +3647,7 @@ CREATE SEQUENCE waypoints_stopareas_waypoint_stoparea_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE guidebook.waypoints_stopareas_waypoint_stoparea_id_seq OWNER TO "www-data";
+ALTER TABLE guidebook.waypoints_stopareas_waypoint_stoparea_id_seq OWNER TO "www-data";
 
 --
 -- Name: waypoints_stopareas_waypoint_stoparea_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
@@ -3844,7 +3827,7 @@ CREATE SEQUENCE activities_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE tracking.activities_id_seq OWNER TO postgres;
+ALTER TABLE tracking.activities_id_seq OWNER TO postgres;
 
 --
 -- Name: activities_id_seq; Type: SEQUENCE OWNED BY; Schema: tracking; Owner: postgres
@@ -3879,7 +3862,7 @@ CREATE SEQUENCE migrations_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE tracking.migrations_id_seq OWNER TO postgres;
+ALTER TABLE tracking.migrations_id_seq OWNER TO postgres;
 
 --
 -- Name: migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: tracking; Owner: postgres
@@ -3912,7 +3895,7 @@ CREATE SEQUENCE migrations_lock_index_seq
     CACHE 1;
 
 
-ALTER SEQUENCE tracking.migrations_lock_index_seq OWNER TO postgres;
+ALTER TABLE tracking.migrations_lock_index_seq OWNER TO postgres;
 
 --
 -- Name: migrations_lock_index_seq; Type: SEQUENCE OWNED BY; Schema: tracking; Owner: postgres
@@ -3945,7 +3928,7 @@ CREATE SEQUENCE polar_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE tracking.polar_id_seq OWNER TO postgres;
+ALTER TABLE tracking.polar_id_seq OWNER TO postgres;
 
 --
 -- Name: polar_id_seq; Type: SEQUENCE OWNED BY; Schema: tracking; Owner: postgres
@@ -3978,7 +3961,7 @@ CREATE SEQUENCE strava_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE tracking.strava_id_seq OWNER TO postgres;
+ALTER TABLE tracking.strava_id_seq OWNER TO postgres;
 
 --
 -- Name: strava_id_seq; Type: SEQUENCE OWNED BY; Schema: tracking; Owner: postgres
@@ -5804,6 +5787,4 @@ ALTER TABLE ONLY "user"
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict dgCt5Wiao4nhESbrgM0GjQgokAhHglngA7wNzWj88dF6NE1y2nTv3qvQeBkoCKc
 

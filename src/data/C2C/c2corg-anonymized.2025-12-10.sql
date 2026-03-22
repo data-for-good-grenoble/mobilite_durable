@@ -2,15 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict FYAUlellEP0OYC2sY41YootdlzbjHV580AsIGWyIzytZvipEKFO7vo5ReBDn54s
-
--- Dumped from database version 17.7
--- Dumped by pg_dump version 17.7
+-- Dumped from database version 9.6.24
+-- Dumped by pg_dump version 9.6.24
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -21,7 +18,7 @@ SET row_security = off;
 
 SET default_tablespace = '';
 
-SET default_table_access_method = heap;
+SET default_with_oids = false;
 
 --
 -- Name: stopareas; Type: TABLE; Schema: guidebook; Owner: www-data
@@ -38,6 +35,34 @@ CREATE TABLE guidebook.stopareas (
 
 
 ALTER TABLE guidebook.stopareas OWNER TO "www-data";
+
+--
+-- Name: stopareas_stoparea_id_seq; Type: SEQUENCE; Schema: guidebook; Owner: www-data
+--
+
+CREATE SEQUENCE guidebook.stopareas_stoparea_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE guidebook.stopareas_stoparea_id_seq OWNER TO "www-data";
+
+--
+-- Name: stopareas_stoparea_id_seq; Type: SEQUENCE OWNED BY; Schema: guidebook; Owner: www-data
+--
+
+ALTER SEQUENCE guidebook.stopareas_stoparea_id_seq OWNED BY guidebook.stopareas.stoparea_id;
+
+
+--
+-- Name: stopareas stoparea_id; Type: DEFAULT; Schema: guidebook; Owner: www-data
+--
+
+ALTER TABLE ONLY guidebook.stopareas ALTER COLUMN stoparea_id SET DEFAULT nextval('guidebook.stopareas_stoparea_id_seq'::regclass);
+
 
 --
 -- Data for Name: stopareas; Type: TABLE DATA; Schema: guidebook; Owner: www-data
@@ -4032,8 +4057,28 @@ INSERT INTO guidebook.stopareas VALUES (3986, 'stop_area:R74:Navitia:FR:74134:ZE
 
 
 --
--- PostgreSQL database dump complete
+-- Name: stopareas_stoparea_id_seq; Type: SEQUENCE SET; Schema: guidebook; Owner: www-data
 --
 
-\unrestrict FYAUlellEP0OYC2sY41YootdlzbjHV580AsIGWyIzytZvipEKFO7vo5ReBDn54s
+SELECT pg_catalog.setval('guidebook.stopareas_stoparea_id_seq', 1, false);
+
+
+--
+-- Name: stopareas stopareas_pkey; Type: CONSTRAINT; Schema: guidebook; Owner: www-data
+--
+
+ALTER TABLE ONLY guidebook.stopareas
+    ADD CONSTRAINT stopareas_pkey PRIMARY KEY (stoparea_id);
+
+
+--
+-- Name: idx_stopareas_geom; Type: INDEX; Schema: guidebook; Owner: www-data
+--
+
+CREATE INDEX idx_stopareas_geom ON guidebook.stopareas USING gist (geom);
+
+
+--
+-- PostgreSQL database dump complete
+--
 
