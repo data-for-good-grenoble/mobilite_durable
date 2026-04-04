@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
@@ -54,8 +55,12 @@ class DummyDistancesProcessor(DistancesProcessor):
     @classmethod
     def write_dummy_output_file(cls):
         res = pd.DataFrame(
-            [(0, None, None, 0, 14.0), (None, 1, None, 0, None), (None, None, 2, 0, 4999.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [
+                (0, None, None, 0, 14.0, True),
+                (None, 1, None, 0, np.nan, True),
+                (None, None, 2, 0, 4999.0, True),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         cls.save(res, cls.output_file)
 
@@ -71,8 +76,12 @@ class TestFetch:
         DummyDistancesProcessor.output_file = tmp_path / "non_existing.parquet"
         result = DummyDistancesProcessor.fetch()
         expected = pd.DataFrame(
-            [(0, None, None, 0, 42.0), (None, 1, None, 0, 42.0), (None, None, 2, 0, 42.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [
+                (0, None, None, 0, 42.0, True),
+                (None, 1, None, 0, 42.0, True),
+                (None, None, 2, 0, 42.0, True),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -87,8 +96,12 @@ class TestFetch:
         DummyDistancesProcessor.write_dummy_output_file()
         result = DummyDistancesProcessor.fetch()
         expected = pd.DataFrame(
-            [(0, None, None, 0, 14.0), (None, 1, None, 0, None), (None, None, 2, 0, 4999.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [
+                (0, None, None, 0, 14.0, True),
+                (None, 1, None, 0, np.nan, True),
+                (None, None, 2, 0, 4999.0, True),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -103,8 +116,12 @@ class TestFetch:
         DummyDistancesProcessor.write_dummy_output_file()
         result = DummyDistancesProcessor.fetch(reload_pipeline=True)
         expected = pd.DataFrame(
-            [(0, None, None, 0, 42.0), (None, 1, None, 0, 42.0), (None, None, 2, 0, 42.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [
+                (0, None, None, 0, 42.0, True),
+                (None, 1, None, 0, 42.0, True),
+                (None, None, 2, 0, 42.0, True),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -119,8 +136,12 @@ class TestFetch:
         DummyDistancesProcessor.write_dummy_output_file()
         result = DummyDistancesProcessor.fetch(fetch_api_kwargs={"keep_old_distances": True})
         expected = pd.DataFrame(
-            [(0, None, None, 0, 14.0), (None, 1, None, 0, None), (None, None, 2, 0, 4999.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [
+                (0, None, None, 0, 14.0, True),
+                (None, 1, None, 0, np.nan, True),
+                (None, None, 2, 0, 4999.0, True),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -137,8 +158,12 @@ class TestFetch:
             reload_pipeline=True, fetch_api_kwargs={"keep_old_distances": True}
         )
         expected = pd.DataFrame(
-            [(0, None, None, 0, 14.0), (None, 1, None, 0, None), (None, None, 2, 0, 4999.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [
+                (0, None, None, 0, 14.0, True),
+                (None, 1, None, 0, np.nan, True),
+                (None, None, 2, 0, 4999.0, True),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -156,12 +181,12 @@ class TestFetch:
         )
         expected = pd.DataFrame(
             [
-                (0, None, None, 0, 14.0),
-                (None, 1, None, 0, None),
-                (None, None, 2, 0, 4999.0),
-                (None, None, 3, 0, 42.0),
+                (0, None, None, 0, 14.0, True),
+                (None, 1, None, 0, np.nan, True),
+                (None, None, 2, 0, 4999.0, True),
+                (None, None, 3, 0, 42.0, True),
             ],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -178,7 +203,7 @@ class TestFetch:
             reload_pipeline=True, fetch_api_kwargs={"keep_old_distances": True}
         )
         expected = pd.DataFrame(
-            [(0, None, None, 0, 14.0), (None, 1, 2, 0, 42.0)],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+            [(0, None, None, 0, 14.0, True), (None, 1, 2, 0, 42.0, True)],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
         pd.testing.assert_frame_equal(result, expected)

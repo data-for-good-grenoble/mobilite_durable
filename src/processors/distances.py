@@ -6,7 +6,7 @@ Author: Nicolas Grosjean
 
 import concurrent.futures
 import logging
-from math import cos, radians, sqrt
+from math import cos, radians
 from pathlib import Path
 
 import geopandas as gpd
@@ -23,6 +23,12 @@ from src.utils.processor_mixin import ProcessorMixin
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+
+class TooFarError(Exception):
+    """Custom exception to indicate that two points are too far to be interesting to compute distance."""
+
+    pass
 
 
 class DistancesProcessor(ProcessorMixin):
@@ -91,29 +97,19 @@ class DistancesProcessor(ProcessorMixin):
                 f"Loading old distances from {cls.output_file} to avoid recomputation..."
             )
             old_distances_df = cls.fetch_from_file(cls.output_file)
-            # Keep NaN distances in the old distances dataframe be setting them to a temporary negative value
-            # before the merge, then set them back to NaN after the merge
-            temporary_negative_value = -1.0
-            # Set another negative value to distinguish from the temporary one after the merge
-            # Distances will be computed later only for remaining negative values
-            another_negative_value = -2.0
-            old_distances_df["distance_m"] = old_distances_df["distance_m"].fillna(
-                temporary_negative_value
-            )
+            if "computed" not in old_distances_df.columns:
+                old_distances_df["computed"] = ~pd.isna(old_distances_df["distance_m"])
             cross_df = cross_df.merge(
                 old_distances_df,
                 on=cls.bus_stop_columns + ["Id wp"],
                 how="left",
                 suffixes=("", "_old"),
             )
-            cross_df["distance_m"] = cross_df["distance_m"].fillna(another_negative_value)
-            cross_df["distance_m"] = cross_df["distance_m"].replace(
-                temporary_negative_value, np.nan
-            )
-            logger.info(
-                f"Number of already computed distances: {(pd.isna(cross_df['distance_m']) | (cross_df['distance_m'] > 0)).sum()}"
-            )
-            logger.info(f"Number of distances to compute: {(cross_df['distance_m'] < 0).sum()}")
+            cross_df["computed"] = cross_df["computed"].fillna(False).astype(bool)
+            logger.info(f"Number of already computed distances: {cross_df['computed'].sum()}")
+            logger.info(f"Number of distances to compute: {(~cross_df['computed']).sum()}")
+        else:
+            cross_df["computed"] = False
 
         # Calculate distances using the API
         with concurrent.futures.ThreadPoolExecutor(max_workers=cls.max_workers) as executor:
@@ -131,8 +127,8 @@ class DistancesProcessor(ProcessorMixin):
                 }
                 for future in concurrent.futures.as_completed(futures):
                     i = futures[future]
-                    cross_df.at[i, "distance_m"] = future.result()
-        return cross_df.loc[:, cls.bus_stop_columns + ["Id wp", "distance_m"]]
+                    cross_df.at[i, "distance_m"], cross_df.at[i, "computed"] = future.result()
+        return cross_df.loc[:, cls.bus_stop_columns + ["Id wp", "distance_m", "computed"]]
 
     @classmethod
     def fetch_from_file(cls, path: Path, **kwargs):
@@ -212,10 +208,16 @@ class DistancesProcessor(ProcessorMixin):
         )
 
     @classmethod
-    def _compute_distance_if_not_already_computed(cls, row: pd.Series) -> float | None:
-        if "distance_m" in row and (pd.isna(row["distance_m"]) or row["distance_m"] >= 0):
-            return row["distance_m"]  # Already computed or ignored
-        return cls._compute_distance(row)
+    def _compute_distance_if_not_already_computed(cls, row: pd.Series) -> tuple[float, bool]:
+        if row["computed"]:
+            return row["distance_m"], True
+        try:
+            return cls._compute_distance(row), True
+        except TooFarError:
+            return np.nan, True
+        except Exception as e:
+            logger.error(f"Error computing distance for row {row.name}: {e}")
+            return np.nan, False
 
     @classmethod
     def _compute_distance(cls, row: pd.Series) -> float:
@@ -227,7 +229,7 @@ class DistancesProcessor(ProcessorMixin):
             row["activity_geometry"].y,
         )
         if straight_distance > (cls.max_distance_threshold + cls.euclidean_margin) ** 2:
-            return np.nan
+            raise TooFarError()
         start_coords = (
             row["bus_stop_geometry"].x,
             row["bus_stop_geometry"].y,
@@ -236,12 +238,7 @@ class DistancesProcessor(ProcessorMixin):
             row["activity_geometry"].x,
             row["activity_geometry"].y,
         )
-        try:
-            distance = cls.api_class.compute_distance(start_coords, end_coords)
-            return distance
-        except Exception as e:
-            logger.error(f"Error computing distance for row {row.name}: {e}")
-            return np.nan
+        return cls.api_class.compute_distance(start_coords, end_coords)
 
     @classmethod
     def _square_euclidean_distance(
