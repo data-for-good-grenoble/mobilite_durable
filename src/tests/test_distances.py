@@ -42,7 +42,7 @@ def mock_get_bus_stops3(mocker: MockerFixture):
 
 @pytest.fixture
 def mock_get_area_activities(mocker: MockerFixture):
-    res = pd.DataFrame([(0, None)], columns=["Id wp", "geometry"])
+    res = pd.DataFrame([(0, None, 420)], columns=["Id wp", "geometry", "latitude_index"])
     mocker.patch.object(DistancesProcessor, "_get_area_activities", return_value=res)
 
 
@@ -56,13 +56,27 @@ class DummyDistancesProcessor(DistancesProcessor):
     def write_dummy_output_file(cls):
         res = pd.DataFrame(
             [
+                (0, None, None, 0, 14.0),
+                (None, 1, None, 0, np.nan),
+                (None, None, 2, 0, 4999.0),
+            ],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
+        )
+        cls.save(res, cls.output_file)
+
+    @classmethod
+    def write_dummy_part_file(cls):
+        res = pd.DataFrame(
+            [
                 (0, None, None, 0, 14.0, True),
                 (None, 1, None, 0, np.nan, True),
                 (None, None, 2, 0, 4999.0, True),
             ],
             columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
         )
-        cls.save(res, cls.output_file)
+        cls.save(
+            res, cls.output_dir / "bus_stops_to_activities_distances_latitude_index_420.parquet"
+        )
 
 
 class TestFetch:
@@ -97,11 +111,11 @@ class TestFetch:
         result = DummyDistancesProcessor.fetch()
         expected = pd.DataFrame(
             [
-                (0, None, None, 0, 14.0, True),
-                (None, 1, None, 0, np.nan, True),
-                (None, None, 2, 0, 4999.0, True),
+                (0, None, None, 0, 14.0),
+                (None, 1, None, 0, np.nan),
+                (None, None, 2, 0, 4999.0),
             ],
-            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m", "computed"],
+            columns=["osm_id", "gtfs_id", "navitia_id", "Id wp", "distance_m"],
         )
         pd.testing.assert_frame_equal(result, expected)
 
@@ -133,7 +147,7 @@ class TestFetch:
         tmp_path: Path,
     ):
         DummyDistancesProcessor.output_file = tmp_path / "distances.parquet"
-        DummyDistancesProcessor.write_dummy_output_file()
+        DummyDistancesProcessor.write_dummy_part_file()
         result = DummyDistancesProcessor.fetch(fetch_api_kwargs={"keep_old_distances": True})
         expected = pd.DataFrame(
             [
@@ -154,6 +168,7 @@ class TestFetch:
     ):
         DummyDistancesProcessor.output_file = tmp_path / "distances.parquet"
         DummyDistancesProcessor.write_dummy_output_file()
+        DummyDistancesProcessor.write_dummy_part_file()
         result = DummyDistancesProcessor.fetch(
             reload_pipeline=True, fetch_api_kwargs={"keep_old_distances": True}
         )
@@ -176,6 +191,7 @@ class TestFetch:
     ):
         DummyDistancesProcessor.output_file = tmp_path / "distances.parquet"
         DummyDistancesProcessor.write_dummy_output_file()
+        DummyDistancesProcessor.write_dummy_part_file()
         result = DummyDistancesProcessor.fetch(
             reload_pipeline=True, fetch_api_kwargs={"keep_old_distances": True}
         )
@@ -199,6 +215,7 @@ class TestFetch:
     ):
         DummyDistancesProcessor.output_file = tmp_path / "distances.parquet"
         DummyDistancesProcessor.write_dummy_output_file()
+        DummyDistancesProcessor.write_dummy_part_file()
         result = DummyDistancesProcessor.fetch(
             reload_pipeline=True, fetch_api_kwargs={"keep_old_distances": True}
         )
